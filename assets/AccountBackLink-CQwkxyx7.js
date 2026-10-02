@@ -1,1 +1,0 @@
-import{t as e}from"./jsx-runtime-CBYkxpZ6.js";import{i as t}from"./format-Bx7nSa55.js";var n=e();function r(){return(0,n.jsxs)(`a`,{href:`/account`,className:t,children:[(0,n.jsx)(`span`,{"aria-hidden":`true`,children:`←`}),`Account`]})}export{r as t};
