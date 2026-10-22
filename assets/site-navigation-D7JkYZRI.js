@@ -1,1 +1,0 @@
-function e(e){window.dispatchEvent(new CustomEvent(`mochi:navigate`,{detail:e}))}export{e as t};

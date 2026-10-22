@@ -2,93 +2,2299 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Mochi’s Legacy is a Boulder, Colorado therapy dog nonprofit bringing joy to senior living communities, schools, and libraries. Meet the squad and get involved." />
-    <meta name="theme-color" content="#FBDF9C" />
     <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#FDFBF7" />
 
-    <!-- Time-of-day sky (ruling 19): set before any CSS so the first paint is right.
-         ?sky=dawn|day|dusk|night freezes it (screenshots and e2e use ?sky=day). -->
-    <script>
-      (function () {
-        var tops = { dawn: "#F8D2C3", day: "#FBDF9C", dusk: "#F8CAA6", night: "#D9D4EA" };
-        var asked = new URLSearchParams(location.search).get("sky");
-        var h = new Date().getHours();
-        var sky = Object.prototype.hasOwnProperty.call(tops, asked) ? asked : h >= 5 && h < 9 ? "dawn" : h >= 9 && h < 17 ? "day" : h >= 17 && h < 20 ? "dusk" : "night";
-        document.documentElement.setAttribute("data-sky", sky);
-        document.querySelector('meta[name="theme-color"]').setAttribute("content", tops[sky]);
-      })();
-    </script>
-
-    <!-- Fraunces display font: upright 600/700 + italic 400/600 (mission lead-in), variable opsz axis -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&display=swap" rel="stylesheet" />
-
-    <title>Mochi’s Legacy</title>
-
-    <!-- Structured data: Organization and October 8 kickoff Event, 5–6 PM Mountain. -->
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@graph": [
-          {
-            "@type": "NGO",
-            "@id": "https://mochislegacy.com/#organization",
-            "name": "Mochi's Legacy",
-            "url": "https://mochislegacy.com/",
-            "description": "Boulder, Colorado therapy dog nonprofit bringing comfort and joy to senior living communities, schools, and libraries.",
-            "address": {
-              "@type": "PostalAddress",
-              "addressLocality": "Boulder",
-              "addressRegion": "CO",
-              "addressCountry": "US"
-            }
-          },
-          {
-            "@type": "Event",
-            "name": "Mochi's Legacy Kickoff Walk",
-            "startDate": "2026-10-08T17:00:00-06:00",
-            "endDate": "2026-10-08T18:00:00-06:00",
-            "description": "A community gaggle walk from Foothills Community Park, Shelter A, around Wonderland Lake.",
-            "eventStatus": "https://schema.org/EventScheduled",
-            "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
-            "location": {
-              "@type": "Place",
-              "name": "Foothills Community Park, Shelter A",
-              "address": {
-                "@type": "PostalAddress",
-                "addressLocality": "Boulder",
-                "addressRegion": "CO",
-                "addressCountry": "US"
-              }
-            },
-            "organizer": {
-              "@id": "https://mochislegacy.com/#organization"
-            }
-          }
-        ]
-      }
-    </script>
-
-    <!-- Open Graph -->
+    <!-- === SECTION: PAGE TITLE & SOCIAL PREVIEW (SAFE TO EDIT TEXT BELOW) === -->
+    <title>Mochi’s Legacy — Golden Retriever Therapy</title>
+    <meta
+      name="description"
+      content="Boulder-area volunteer dogs and handlers sharing comfort and joy. Continuing Mochi’s legacy through Gaggle of Goldens community walks and therapy visits."
+    />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Mochi’s Legacy" />
-    <meta property="og:title" content="Mochi’s Legacy — Therapy Dog Nonprofit in Boulder, CO" />
-    <meta property="og:description" content="Boulder, Colorado therapy dog nonprofit bringing joy to senior living communities, schools, and libraries. Meet the squad and get involved." />
-    <meta property="og:url" content="https://mochislegacy.com/" />
-    <meta property="og:locale" content="en_US" />
-    <meta property="og:image" content="https://mochislegacy.com/og.png" />
+    <meta property="og:title" content="Mochi’s Legacy — Golden Retriever Therapy" />
+    <meta
+      property="og:description"
+      content="Boulder-area volunteer dogs and handlers sharing comfort and joy."
+    />
+    <meta property="og:url" content="https://mochislegacy.org/" />
+    <meta property="og:image" content="https://mochislegacy.org/assets/images/og.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Mochi’s Legacy — therapy dog nonprofit in Boulder, CO" />
+    <meta
+      property="og:image:alt"
+      content="Mochi’s Legacy — Boulder-area volunteer dogs and handlers sharing comfort and joy."
+    />
     <meta name="twitter:card" content="summary_large_image" />
-    <script type="module" crossorigin src="/assets/index-e40csyZZ.js"></script>
-    <link rel="modulepreload" crossorigin href="/assets/jsx-runtime-CBYkxpZ6.js">
-    <link rel="stylesheet" crossorigin href="/assets/index-BLFZUl04.css">
+    <meta name="twitter:title" content="Mochi’s Legacy — Golden Retriever Therapy" />
+    <meta
+      name="twitter:description"
+      content="Boulder-area volunteer dogs and handlers sharing comfort and joy."
+    />
+    <meta name="twitter:image" content="https://mochislegacy.org/assets/images/og.png" />
+    <!-- === END SECTION: PAGE TITLE & SOCIAL PREVIEW === -->
+
+    <link rel="canonical" href="https://mochislegacy.org/" />
+    <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg" />
+
+    <!-- Google Fonts: Fraunces Display Serif -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&display=swap"
+    />
+
+    <!-- Consolidated Vanilla Stylesheet -->
+    <link rel="stylesheet" href="assets/css/styles.css" />
+
+    <!-- Set time-of-day sky palette before first paint -->
+    <script>
+      (function () {
+        var override = new URLSearchParams(location.search).get("sky");
+        if (
+          override === "dawn" ||
+          override === "day" ||
+          override === "dusk" ||
+          override === "night"
+        ) {
+          document.documentElement.dataset.sky = override;
+          return;
+        }
+        var h = new Date().getHours();
+        document.documentElement.dataset.sky =
+          h >= 5 && h < 8
+            ? "dawn"
+            : h >= 8 && h < 17
+              ? "day"
+              : h >= 17 && h < 20
+                ? "dusk"
+                : "night";
+      })();
+    </script>
   </head>
+
   <body>
-    <div id="root"></div>
+    <div class="site-wrapper">
+      <!-- =====================================================================
+           HEADER & NAVIGATION
+           ===================================================================== -->
+      <header class="site-header" data-testid="site-header">
+        <div class="site-container site-container-wide site-header-inner">
+          <a
+            href="#home"
+            data-nav="home"
+            aria-label="Mochi's Legacy home"
+            class="site-wordmark"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+              class="wordmark-icon"
+            >
+              <circle cx="11" cy="4" r="2"></circle>
+              <circle cx="18" cy="8" r="2"></circle>
+              <circle cx="20" cy="16" r="2"></circle>
+              <path
+                d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z"
+              ></path>
+            </svg>
+            <!-- === SECTION: HEADER BRAND NAME (SAFE TO EDIT TEXT BELOW) === -->
+            <span class="wordmark-text">Mochi's Legacy</span>
+            <!-- === END SECTION: HEADER BRAND NAME === -->
+          </a>
+
+          <!-- === SECTION: NAVIGATION LINKS (SAFE TO EDIT TEXT BELOW) === -->
+          <nav aria-label="Site" class="site-navigation">
+            <a href="#home" data-nav="home" aria-current="page">Home</a>
+            <a href="#events" data-nav="events">Events</a>
+            <a href="#about" data-nav="about">About</a>
+            <a href="#board" data-nav="board">Our Board</a>
+            <span class="site-navigation-slot">
+              <span aria-hidden="true">Sign in</span>
+              <span aria-hidden="true">Account</span>
+              <a href="#admin" data-nav="admin" id="header-admin-link">Admin</a>
+            </span>
+          </nav>
+          <!-- === END SECTION: NAVIGATION LINKS === -->
+        </div>
+      </header>
+
+      <!-- =====================================================================
+           MAIN CONTENT AREA
+           ===================================================================== -->
+      <main id="main-content">
+        <!-- ===================================================================
+             VIEW 1: HOME (LANDING PAGE)
+             =================================================================== -->
+        <section id="view-home" class="hero-section">
+          <div class="site-container site-container-wide landing-shell">
+            <div class="landing-first-screen">
+              <!-- === SECTION: HERO TITLE & MISSION (SAFE TO EDIT TEXT BELOW) === -->
+              <div class="landing-intro">
+                <h1 tabindex="-1" class="landing-title">Mochi’s Legacy</h1>
+                <p class="landing-mission">
+                  Boulder-area volunteer dogs and handlers sharing comfort and joy.
+                </p>
+              </div>
+              <!-- === END SECTION: HERO TITLE & MISSION === -->
+
+              <!-- === SECTION: MOCHI'S STORY & MISSION STATEMENT (SAFE TO EDIT TEXT BELOW) === -->
+              <p class="landing-story">
+                Mochi was a very beloved Golden Retriever who lived in Boulder, CO. Her sweet, playful, affectionate, and loving personality were unique and touched the hearts and lives of many people. Mochi had an ability to quietly connect with people and calm them. She exuded unconditional love. People often asked if she was a therapy dog. Officially she was not. In practice, however, this seems to have been her life’s mission, and she fulfilled it beautifully. She crossed the rainbow bridge in July, 2026 just weeks before her 13th birthday.  The mission of Mochi’s Legacy Golden Retriever Therapy nonprofit is to continue Mochi’s beautiful legacy of bringing love and healing to others.  Mochi’s Legacy works with Golden Retrievers whose humans volunteer them to:  1 Go into the Boulder community to schools, hospitals, and elder care facilities  2 Participate in our regular “Gaggle of Goldens” walks around Boulder with up to 15 Golden Retrievers at a time, brightening people’s days and promoting our nonprofit  3 Be available for people to participate in Golden Retriever experiences on a Boulder farm several times a month (starting in early 2027)
+              </p>
+              <!-- === END SECTION: MOCHI'S STORY & MISSION STATEMENT === -->
+
+              <!-- ===============================================================
+                   PHOTO STRIP & DOG FILTER PILLS
+                   =============================================================== -->
+              <div class="landing-photos">
+                <div
+                  id="photo-strip"
+                  role="region"
+                  aria-label="Dog photos"
+                  tabindex="0"
+                  class="photo-strip"
+                >
+                  <!-- === SECTION: PHOTO GALLERY ITEMS (SAFE TO ADD/EDIT PHOTOS BELOW) === -->
+                  <!-- To add a photo: copy one <li class="photo-strip-tile" ...>...</li> block and update data-dog, src, srcset, and alt. -->
+                  <ul id="photo-strip-list" class="photo-strip-list" aria-label="Dog photos">
+                    <!-- PHOTO 1 -->
+                    <li class="photo-strip-tile" data-dog="Mochi">
+                      <img
+                        src="assets/images/photos/mochi-1-500.webp"
+                        srcset="
+                          assets/images/photos/mochi-1-500.webp   375w,
+                          assets/images/photos/mochi-1-800.webp   600w,
+                          assets/images/photos/mochi-1-1200.webp  900w
+                        "
+                        sizes="(min-width: 1024px) 206px, 144px"
+                        alt="Mochi, a golden retriever, grinning on a sunny lawn with a stick in her mouth."
+                        width="900"
+                        height="1200"
+                        loading="eager"
+                        decoding="async"
+                        draggable="false"
+                        style="object-position: 50% 30%"
+                      />
+                    </li>
+
+                    <!-- PHOTO 2 -->
+                    <li class="photo-strip-tile" data-dog="Mochi">
+                      <img
+                        src="assets/images/photos/mochi-2-500.webp"
+                        srcset="
+                          assets/images/photos/mochi-2-500.webp   375w,
+                          assets/images/photos/mochi-2-800.webp   600w,
+                          assets/images/photos/mochi-2-1200.webp  900w
+                        "
+                        sizes="(min-width: 1024px) 206px, 144px"
+                        alt="Mochi smiling from the front seat of a car."
+                        width="900"
+                        height="1200"
+                        loading="eager"
+                        decoding="async"
+                        draggable="false"
+                        style="object-position: 50% 35%"
+                      />
+                    </li>
+
+                    <!-- PHOTO 3 -->
+                    <li class="photo-strip-tile" data-dog="Mochi">
+                      <img
+                        src="assets/images/photos/mochi-4-500.webp"
+                        srcset="
+                          assets/images/photos/mochi-4-500.webp   375w,
+                          assets/images/photos/mochi-4-800.webp   600w,
+                          assets/images/photos/mochi-4-1200.webp  849w
+                        "
+                        sizes="(min-width: 1024px) 206px, 144px"
+                        alt="Mochi sitting on a forest trail with her tongue out."
+                        width="849"
+                        height="1132"
+                        loading="eager"
+                        decoding="async"
+                        draggable="false"
+                        style="object-position: 65% 45%"
+                      />
+                    </li>
+
+                    <!-- PHOTO 4 -->
+                    <li class="photo-strip-tile" data-dog="Mochi">
+                      <img
+                        src="assets/images/photos/mochi-11-500.webp"
+                        srcset="
+                          assets/images/photos/mochi-11-500.webp   375w,
+                          assets/images/photos/mochi-11-800.webp   601w,
+                          assets/images/photos/mochi-11-1200.webp  901w
+                        "
+                        sizes="(min-width: 1024px) 206px, 144px"
+                        alt="Mochi standing in deep snow with snow on her nose."
+                        width="901"
+                        height="1200"
+                        loading="eager"
+                        decoding="async"
+                        draggable="false"
+                        style="object-position: 40% 45%"
+                      />
+                    </li>
+
+                    <!-- PHOTO 5 -->
+                    <li class="photo-strip-tile" data-dog="Mochi">
+                      <img
+                        src="assets/images/photos/mochi-15-500.webp"
+                        srcset="
+                          assets/images/photos/mochi-15-500.webp   333w,
+                          assets/images/photos/mochi-15-800.webp   533w,
+                          assets/images/photos/mochi-15-1200.webp  800w
+                        "
+                        sizes="(min-width: 1024px) 206px, 144px"
+                        alt="Close-up of Mochi's face, mouth open in a smile, behind a wooden chair leg."
+                        width="800"
+                        height="1200"
+                        loading="lazy"
+                        decoding="async"
+                        draggable="false"
+                        style="object-position: 100% 32%"
+                      />
+                    </li>
+
+                    <!-- PHOTO 6 -->
+                    <li class="photo-strip-tile" data-dog="Mochi">
+                      <img
+                        src="assets/images/photos/mochi-16.jpg"
+                        alt="Mochi gently resting her nose next to a young baby on a bed."
+                        width="1115"
+                        height="625"
+                        loading="lazy"
+                        decoding="async"
+                        draggable="false"
+                        style="object-position: 50% 50%"
+                      />
+                    </li>
+
+                    <!-- PHOTO 7 -->
+                    <li class="photo-strip-tile" data-dog="Mochi">
+                      <img
+                        src="assets/images/photos/mochi-17.jpg"
+                        alt="Mochi smiling happily on a pickleball court wearing an orange bandana with a tennis ball."
+                        width="1116"
+                        height="1628"
+                        loading="lazy"
+                        decoding="async"
+                        draggable="false"
+                        style="object-position: 50% 25%"
+                      />
+                    </li>
+
+                    <!-- PHOTO 8 -->
+                    <li class="photo-strip-tile" data-dog="Mochi">
+                      <img
+                        src="assets/images/photos/mochi-18.jpg"
+                        alt="Mochi resting cozily on the floor beneath a game table with a tennis ball tucked against her cheek."
+                        width="900"
+                        height="1200"
+                        loading="lazy"
+                        decoding="async"
+                        draggable="false"
+                        style="object-position: 50% 45%"
+                      />
+                    </li>
+                  </ul>
+                  <!-- === END SECTION: PHOTO GALLERY ITEMS === -->
+                </div>
+
+                <!-- Placeholder shown when a selected dog has no photos yet -->
+                <p id="photo-strip-soon" role="status" class="landing-photos-soon" hidden>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.25"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <circle cx="11" cy="4" r="2"></circle>
+                    <circle cx="18" cy="8" r="2"></circle>
+                    <circle cx="20" cy="16" r="2"></circle>
+                    <path
+                      d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z"
+                    ></path>
+                  </svg>
+                  <span>Photos of <span id="photo-strip-dog-name">Honey</span> are coming soon.</span>
+                </p>
+
+                <!-- === SECTION: DOG FILTER BUTTONS (SAFE TO EDIT NAMES BELOW) === -->
+                <div
+                  role="radiogroup"
+                  aria-label="Show photos of"
+                  class="landing-dog-filter"
+                >
+                  <label class="dog-filter-pill is-active">
+                    <input
+                      type="radio"
+                      name="landing-dog"
+                      value="Mochi"
+                      checked
+                    />
+                    <span>
+                      <span aria-hidden="true" class="star-icon">★</span> Mochi ·
+                      <span class="dog-role">Registered Dog Officer</span>
+                    </span>
+                  </label>
+
+                  <div class="dog-filter-squad">
+                    <label class="dog-filter-pill">
+                      <input type="radio" name="landing-dog" value="Honey" />
+                      Honey
+                    </label>
+                    <label class="dog-filter-pill">
+                      <input type="radio" name="landing-dog" value="Luna" />
+                      Luna
+                    </label>
+                    <label class="dog-filter-pill">
+                      <input type="radio" name="landing-dog" value="Mini Mochi" />
+                      Mini Mochi
+                    </label>
+                    <label class="dog-filter-pill">
+                      <input type="radio" name="landing-dog" value="Jaz" />
+                      Jaz
+                    </label>
+                    <label class="dog-filter-pill">
+                      <input type="radio" name="landing-dog" value="Bode" />
+                      Bode
+                    </label>
+                  </div>
+                </div>
+                <!-- === END SECTION: DOG FILTER BUTTONS === -->
+              </div>
+
+              <!-- ===============================================================
+                   CURRENT EVENTS TICKET SECTION
+                   =============================================================== -->
+              <!-- === SECTION: CURRENT EVENTS (SAFE TO ADD/EDIT EVENTS BELOW) === -->
+              <section
+                aria-labelledby="current-events"
+                class="landing-ticket-container"
+              >
+                <h2 id="current-events" class="section-eyebrow">Current events</h2>
+
+                <div id="home-tickets-list" class="landing-tickets">
+                  <!-- DEFAULT TICKET (When no upcoming events are scheduled) -->
+                  <div class="ticket landing-ticket" data-empty-ticket="true">
+                    <div class="landing-ticket-detail">
+                      <p class="landing-event-title is-empty">
+                        No upcoming events yet.
+                      </p>
+                    </div>
+                    <div class="landing-ticket-stub">
+                      <a href="#events" data-nav="events" class="landing-event-link">
+                        Event sign-ups
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="M5 12h14"></path>
+                          <path d="m12 5 7 7-7 7"></path>
+                        </svg>
+                      </a>
+                    </div>
+                  </div>
+
+                  <!--
+                  ===================================================================
+                  TEMPLATE: UPCOMING EVENT TICKET (COPY & UNCOMMENT TO ADD AN EVENT)
+                  ===================================================================
+                  <div class="ticket landing-ticket">
+                    <div class="landing-ticket-detail">
+                      <p class="landing-event-kind"><span>Gaggle walk</span></p>
+                      <h3 class="landing-event-title">Saturday Morning Gaggle Walk</h3>
+                      <p class="landing-event-spot">Pearl Street Mall · Boulder, CO</p>
+                      <p class="landing-date">May 16 · 10:00 AM – 11:30 AM</p>
+                    </div>
+                    <div class="landing-ticket-stub">
+                      <a href="#events" data-nav="events" class="landing-event-link">
+                        Event sign-ups
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <path d="M5 12h14"></path>
+                          <path d="m12 5 7 7-7 7"></path>
+                        </svg>
+                      </a>
+                    </div>
+                  </div>
+                  -->
+                </div>
+              </section>
+              <!-- === END SECTION: CURRENT EVENTS === -->
+
+              <!-- ===============================================================
+                   AUDIENCE ACTION BUTTONS (CTA)
+                   =============================================================== -->
+              <!-- === SECTION: CALL-TO-ACTION BUTTONS (SAFE TO EDIT TEXT/LINKS BELOW) === -->
+              <div class="landing-actions">
+                <button
+                  type="button"
+                  data-open-modal="modal-dog"
+                  class="landing-audience-button btn-dog"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M11.25 16.25h1.5L12 17z"></path>
+                    <path d="M16 14v.5"></path>
+                    <path
+                      d="M4.42 11.247A13.152 13.152 0 0 0 4 14.556C4 18.728 7.582 21 12 21s8-2.272 8-6.444a11.702 11.702 0 0 0-.493-3.309"
+                    ></path>
+                    <path d="M8 14v.5"></path>
+                    <path
+                      d="M8.5 8.5c-.384 1.05-1.083 2.028-2.344 2.5-1.931.722-3.576-.297-3.656-1-.113-.994 1.177-6.53 4-7 1.923-.321 3.651.845 3.651 2.235A7.497 7.497 0 0 1 14 5.277c0-1.39 1.844-2.598 3.767-2.277 2.823.47 4.113 6.006 4 7-.08.703-1.725 1.722-3.656 1-1.261-.472-1.855-1.45-2.239-2.5"
+                    ></path>
+                  </svg>
+                  I have a dog
+                </button>
+
+                <button
+                  type="button"
+                  data-open-modal="modal-volunteer"
+                  class="landing-audience-button btn-volunteer"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M11 14h2a2 2 0 0 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 16"
+                    ></path>
+                    <path
+                      d="m14.45 13.39 5.05-4.694C20.196 8 21 6.85 21 5.75a2.75 2.75 0 0 0-4.797-1.837.276.276 0 0 1-.406 0A2.75 2.75 0 0 0 11 5.75c0 1.2.802 2.248 1.5 2.946L16 11.95"
+                    ></path>
+                    <path d="m2 15 6 6"></path>
+                    <path
+                      d="m7 20 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a1 1 0 0 0-2.75-2.91"
+                    ></path>
+                  </svg>
+                  I want to volunteer
+                </button>
+
+                <a
+                  href="https://www.zeffy.com/en-US/donation-form/mochis-legacy-golden-retriever-therapy-general-fund-launch"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="landing-audience-button btn-support"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M19.414 14.414C21 12.828 22 11.5 22 9.5a5.5 5.5 0 0 0-9.591-3.676.6.6 0 0 1-.818.001A5.5 5.5 0 0 0 2 9.5c0 2.3 1.5 4 3 5.5l5.535 5.362a2 2 0 0 0 2.879.052 2.12 2.12 0 0 0-.004-3 2.124 2.124 0 1 0 3-3 2.124 2.124 0 0 0 3.004 0 2 2 0 0 0 0-2.828l-1.881-1.882a2.41 2.41 0 0 0-3.409 0l-1.71 1.71a2 2 0 0 1-2.828 0 2 2 0 0 1 0-2.828l2.823-2.762"
+                    ></path>
+                  </svg>
+                  I want to support
+                </a>
+              </div>
+              <!-- === END SECTION: CALL-TO-ACTION BUTTONS === -->
+
+              <!-- ===============================================================
+                   KICKOFF SQUAD SECTION
+                   =============================================================== -->
+              <!-- === SECTION: KICKOFF SQUAD (SAFE TO EDIT TEXT BELOW) === -->
+              <figure class="landing-squad">
+                <figcaption class="landing-squad-caption">
+                  <p class="squad-heading">Meet the kickoff squad: five dogs.</p>
+
+                  <ul class="squad-list">
+                    <li class="squad-chip">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.25"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <circle cx="11" cy="4" r="2"></circle>
+                        <circle cx="18" cy="8" r="2"></circle>
+                        <circle cx="20" cy="16" r="2"></circle>
+                        <path
+                          d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z"
+                        ></path>
+                      </svg>
+                      Honey
+                    </li>
+
+                    <li class="squad-chip">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.25"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <circle cx="11" cy="4" r="2"></circle>
+                        <circle cx="18" cy="8" r="2"></circle>
+                        <circle cx="20" cy="16" r="2"></circle>
+                        <path
+                          d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z"
+                        ></path>
+                      </svg>
+                      Luna
+                    </li>
+
+                    <li class="squad-chip">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.25"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <circle cx="11" cy="4" r="2"></circle>
+                        <circle cx="18" cy="8" r="2"></circle>
+                        <circle cx="20" cy="16" r="2"></circle>
+                        <path
+                          d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z"
+                        ></path>
+                      </svg>
+                      Mini Mochi
+                    </li>
+
+                    <li class="squad-chip">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.25"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <circle cx="11" cy="4" r="2"></circle>
+                        <circle cx="18" cy="8" r="2"></circle>
+                        <circle cx="20" cy="16" r="2"></circle>
+                        <path
+                          d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z"
+                        ></path>
+                      </svg>
+                      Jaz
+                    </li>
+
+                    <li class="squad-chip">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.25"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <circle cx="11" cy="4" r="2"></circle>
+                        <circle cx="18" cy="8" r="2"></circle>
+                        <circle cx="20" cy="16" r="2"></circle>
+                        <path
+                          d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z"
+                        ></path>
+                      </svg>
+                      Bode
+                    </li>
+                  </ul>
+
+                  <p class="squad-subtext">
+                    We organize volunteer handler-and-dog teams to visit senior living communities, schools, and libraries.
+                  </p>
+                </figcaption>
+              </figure>
+              <!-- === END SECTION: KICKOFF SQUAD === -->
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================================================================
+             VIEW 2: EVENTS PAGE
+             =================================================================== -->
+        <!-- === SECTION: EVENTS PAGE (SAFE TO EDIT TEXT BELOW) === -->
+        <section
+          id="view-events"
+          class="site-container site-container-reading page-main"
+          hidden
+        >
+          <h1 tabindex="-1" class="sr-only">Events</h1>
+
+          <h2 class="section-heading-with-icon">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M8 2v3"></path>
+              <path d="M16 2v3"></path>
+              <rect width="18" height="18" x="3" y="4" rx="2"></rect>
+              <path d="M3 10h18"></path>
+              <path d="M8 14h.01"></path>
+              <path d="M12 14h.01"></path>
+              <path d="M16 14h.01"></path>
+              <path d="M8 18h.01"></path>
+              <path d="M12 18h.01"></path>
+              <path d="M16 18h.01"></path>
+            </svg>
+            Coming up
+          </h2>
+
+          <!-- EMPTY STATE CARD (Delete or comment out when you add an event below) -->
+          <div id="events-empty-card" class="feature-card events-empty-card">
+            <span class="icon-circle">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M8 2v3"></path>
+                <path d="M16 2v3"></path>
+                <rect width="18" height="18" x="3" y="4" rx="2"></rect>
+                <path d="M3 10h18"></path>
+                <path d="M8 14h.01"></path>
+                <path d="M12 14h.01"></path>
+                <path d="M16 14h.01"></path>
+                <path d="M8 18h.01"></path>
+                <path d="M12 18h.01"></path>
+                <path d="M16 18h.01"></path>
+              </svg>
+            </span>
+            <p class="events-empty-title">No events on the calendar just yet</p>
+            <p class="events-empty-sub">
+              New events show up here as soon as they're posted. Check back soon.
+            </p>
+          </div>
+
+          <!-- Dynamic events rendered from Admin Dashboard / Supabase appear here -->
+          <div id="events-list-container" class="events-dynamic-list"></div>
+
+          <!--
+          ===================================================================
+          TEMPLATE: EVENT CARD (COPY & UNCOMMENT TO ADD AN EVENT ON THIS PAGE)
+          ===================================================================
+          <article class="event-card">
+            <div class="event-card-header">
+              <div class="event-date-badge" aria-hidden="true">
+                <span class="event-date-month">MAY</span>
+                <span class="event-date-day">16</span>
+              </div>
+              <div class="event-card-info">
+                <p class="event-card-kind">Gaggle walk</p>
+                <h3 class="event-card-title">Saturday Morning Gaggle Walk</h3>
+                <p class="event-card-time">Saturday, May 16 · 10:00 AM – 11:30 AM</p>
+              </div>
+            </div>
+            <p class="event-card-spot">Meet at: Pearl Street Mall, Boulder, CO</p>
+            <p class="event-card-notes">Bring water and a standard 6-foot leash.</p>
+          </article>
+          -->
+
+          <section aria-labelledby="join-title" class="events-join-card">
+            <div class="events-join-body">
+              <h2 id="join-title" class="section-heading">
+                New here? Come walk with us.
+              </h2>
+              <button
+                type="button"
+                data-open-modal="modal-dog"
+                class="btn-ember-pill"
+              >
+                Tell us about your dog
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M5 12h14"></path>
+                  <path d="m12 5 7 7-7 7"></path>
+                </svg>
+              </button>
+              <p class="events-join-desc">
+                Events are for dogs on our roster, and getting on it starts with a hello. Tell us a little about your pup and a founder will reach out.
+              </p>
+            </div>
+          </section>
+
+          <!-- === SECTION: PAST EVENT PHOTOS (SAFE TO ADD PHOTOS BELOW) === -->
+          <section aria-labelledby="past-events-heading" class="events-past-photos-section">
+            <h2 id="past-events-heading" class="section-heading-with-icon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
+                <circle cx="9" cy="9" r="2"></circle>
+                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
+              </svg>
+              Photos from previous events
+            </h2>
+
+            <!-- Placeholder shown when no past event photos have been uploaded yet -->
+            <div id="events-past-photos-empty" class="events-past-photos-placeholder">
+              <div class="events-past-photos-icon" aria-hidden="true">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="28"
+                  height="28"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="11" cy="4" r="2"></circle>
+                  <circle cx="18" cy="8" r="2"></circle>
+                  <circle cx="20" cy="16" r="2"></circle>
+                  <path
+                    d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z"
+                  ></path>
+                </svg>
+              </div>
+              <p class="events-past-photos-title">Photos coming soon!</p>
+              <p class="events-past-photos-text">
+                Check back after our upcoming Gaggle walks and community visits to see photos of our dogs in action.
+              </p>
+            </div>
+
+            <!-- Ready-to-use photo strip container for when photos are added -->
+            <div
+              id="events-past-photo-strip"
+              class="photo-strip events-photos"
+              tabindex="0"
+              role="region"
+              aria-label="Past events photo gallery"
+              hidden
+            >
+              <ul id="events-past-photo-list" class="photo-strip-list">
+                <!--
+                ===============================================================
+                TEMPLATE: PAST EVENT PHOTO (COPY & UNCOMMENT TO ADD PHOTOS)
+                ===============================================================
+                <li class="photo-strip-tile">
+                  <img
+                    src="assets/images/photos/event-1.jpg"
+                    alt="Golden Retrievers walking together on Pearl Street Mall."
+                    loading="lazy"
+                    decoding="async"
+                    draggable="false"
+                  />
+                </li>
+                -->
+              </ul>
+            </div>
+          </section>
+          <!-- === END SECTION: PAST EVENT PHOTOS === -->
+        </section>
+        <!-- === END SECTION: EVENTS PAGE === -->
+
+        <!-- ===================================================================
+             VIEW 3: ABOUT US PAGE (VETTING & BOARD OF DIRECTORS)
+             =================================================================== -->
+        <!-- === SECTION: ABOUT US PAGE (SAFE TO EDIT TEXT BELOW) === -->
+        <section
+          id="view-about"
+          class="site-container site-container-about page-main"
+          hidden
+        >
+          <h1 tabindex="-1" class="sr-only">About</h1>
+
+          <!-- === SECTION: MOCHI'S STORY (SAFE TO EDIT TEXT BELOW) === -->
+          <div class="about-story-section">
+            <p class="section-eyebrow">Mochi's Story</p>
+            <div class="about-story-text">
+              <p>
+                Mochi was a very beloved Golden Retriever who lived in Boulder, CO. Her sweet, playful, affectionate, and loving personality were unique and touched the hearts and lives of many people. Mochi had an ability to quietly connect with people and calm them. She exuded unconditional love. People often asked if she was a therapy dog. Officially she was not. In practice, however, this seems to have been her life’s mission, and she fulfilled it beautifully. She crossed the rainbow bridge in July, 2026 just weeks before her 13th birthday.
+              </p>
+              <p>
+                The mission of Mochi’s Legacy Golden Retriever Therapy nonprofit is to continue Mochi’s beautiful legacy of bringing love and healing to others. Mochi’s Legacy works with Golden Retrievers whose humans volunteer them to:
+              </p>
+              <ol class="about-goals-list">
+                <li><span class="goal-number" aria-hidden="true">1</span> Go into the Boulder community to schools, hospitals, and elder care facilities</li>
+                <li><span class="goal-number" aria-hidden="true">2</span> Participate in our regular “Gaggle of Goldens” walks around Boulder with up to 15 Golden Retrievers at a time, brightening people’s days and promoting our nonprofit</li>
+                <li><span class="goal-number" aria-hidden="true">3</span> Be available for people to participate in Golden Retriever experiences on a Boulder farm several times a month (starting in early 2027)</li>
+              </ol>
+            </div>
+
+            <div class="about-actions">
+              <a href="#events" data-nav="events" class="btn-ember-pill">
+                See upcoming events
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M5 12h14"></path>
+                  <path d="m12 5 7 7-7 7"></path>
+                </svg>
+              </a>
+            </div>
+          </div>
+          <!-- === END SECTION: MOCHI'S STORY === -->
+
+          <!-- === SECTION: ABOUT PHOTO GALLERY (SAFE TO EDIT PHOTOS BELOW) === -->
+          <div class="about-photos">
+            <div
+              id="about-photo-strip"
+              class="photo-strip"
+              tabindex="0"
+              role="region"
+              aria-label="Mochi photos gallery"
+            >
+              <ul id="about-photo-strip-list" class="photo-strip-list" aria-label="Mochi photos">
+                <li class="photo-strip-tile">
+                  <img
+                    src="assets/images/photos/mochi-2-500.webp"
+                    srcset="
+                      assets/images/photos/mochi-2-500.webp   375w,
+                      assets/images/photos/mochi-2-800.webp   600w,
+                      assets/images/photos/mochi-2-1200.webp  900w
+                    "
+                    sizes="(min-width: 1024px) 206px, 144px"
+                    alt="Mochi smiling from the front seat of a car."
+                    width="900"
+                    height="1200"
+                    loading="lazy"
+                    decoding="async"
+                    draggable="false"
+                    style="object-position: 50% 35%"
+                  />
+                </li>
+                <li class="photo-strip-tile">
+                  <img
+                    src="assets/images/photos/mochi-1-500.webp"
+                    srcset="
+                      assets/images/photos/mochi-1-500.webp   375w,
+                      assets/images/photos/mochi-1-800.webp   600w,
+                      assets/images/photos/mochi-1-1200.webp  900w
+                    "
+                    sizes="(min-width: 1024px) 206px, 144px"
+                    alt="Mochi, a golden retriever, grinning on a sunny lawn with a stick in her mouth."
+                    width="900"
+                    height="1200"
+                    loading="lazy"
+                    decoding="async"
+                    draggable="false"
+                    style="object-position: 50% 30%"
+                  />
+                </li>
+                <li class="photo-strip-tile">
+                  <img
+                    src="assets/images/photos/mochi-12-500.webp"
+                    srcset="
+                      assets/images/photos/mochi-12-500.webp   386w,
+                      assets/images/photos/mochi-12-800.webp   617w,
+                      assets/images/photos/mochi-12-1200.webp  925w
+                    "
+                    sizes="(min-width: 1024px) 206px, 144px"
+                    alt="Mochi sitting in a grassy field with her tongue out, a tennis ball beside her."
+                    width="925"
+                    height="1200"
+                    loading="lazy"
+                    decoding="async"
+                    draggable="false"
+                  />
+                </li>
+                <li class="photo-strip-tile">
+                  <img
+                    src="assets/images/photos/mochi-19.jpg"
+                    alt="Mochi wearing a cozy red and black buffalo plaid scarf, resting her paw on a friend's shoe."
+                    width="1200"
+                    height="900"
+                    loading="lazy"
+                    decoding="async"
+                    draggable="false"
+                    style="object-position: 50% 45%"
+                  />
+                </li>
+                <li class="photo-strip-tile">
+                  <img
+                    src="assets/images/photos/mochi-20.jpg"
+                    alt="Mochi sitting attentively on the floor with a tennis ball happily held in her mouth."
+                    width="755"
+                    height="1200"
+                    loading="lazy"
+                    decoding="async"
+                    draggable="false"
+                    style="object-position: 50% 35%"
+                  />
+                </li>
+              </ul>
+            </div>
+          </div>
+          <!-- === END SECTION: ABOUT PHOTO GALLERY === -->
+
+          <!-- === SECTION: HOW VETTING WORKS (SAFE TO EDIT TEXT BELOW) === -->
+          <section aria-labelledby="vetting-heading" class="content-section">
+            <h2 id="vetting-heading" class="section-heading">How vetting works</h2>
+            <div class="vetting-card">
+              <ol class="vetting-list">
+                <li class="vetting-step">
+                  <span aria-hidden="true" class="vetting-number">1</span>
+                  <div>
+                    <span class="stage-badge tone-plain">Gaggle</span>
+                    <p class="vetting-desc">
+                      Founder-approved, people- and dog-friendly dogs start with walks.
+                    </p>
+                  </div>
+                </li>
+                <li class="vetting-step">
+                  <span aria-hidden="true" class="vetting-number">2</span>
+                  <div>
+                    <span class="stage-badge tone-honey">Candidate</span>
+                    <p class="vetting-desc">
+                      A founder reviews walks, behaviour and opt-outs before suitable visits.
+                    </p>
+                  </div>
+                </li>
+                <li class="vetting-step">
+                  <span aria-hidden="true" class="vetting-number">3</span>
+                  <div>
+                    <span class="stage-badge tone-ok">Therapy</span>
+                    <p class="vetting-desc">
+                      Registry-certified. Founders record certification; we don’t certify dogs.
+                    </p>
+                  </div>
+                </li>
+              </ol>
+              <p class="vetting-footer">
+                Founders decide with evidence. Never automatic.
+              </p>
+            </div>
+            <p class="service-dog-note">Therapy dogs are not service dogs.</p>
+          </section>
+          <!-- === END SECTION: HOW VETTING WORKS === -->
+
+          <!-- === SECTION: AMBASSADORS (SAFE TO EDIT TEXT BELOW) === -->
+          <section aria-labelledby="ambassadors-heading" class="content-section">
+            <h2 id="ambassadors-heading" class="section-heading">Ambassadors</h2>
+            <p class="vetting-desc">
+              Ambassadors take our dogs out into the community.
+            </p>
+            <button
+              type="button"
+              data-open-modal="modal-volunteer"
+              class="text-link-btn"
+            >
+              Want to be one?
+            </button>
+          </section>
+          <!-- === END SECTION: AMBASSADORS === -->
+        </section>
+        <!-- === END SECTION: ABOUT US PAGE === -->
+
+        <!-- ===================================================================
+             VIEW 4: OUR BOARD PAGE (BOARD OF DIRECTORS)
+             =================================================================== -->
+        <!-- === SECTION: OUR BOARD PAGE (SAFE TO EDIT BIOS BELOW) === -->
+        <section
+          id="view-board"
+          class="site-container site-container-board page-main"
+          hidden
+        >
+          <h1 tabindex="-1" class="sr-only">Our Board</h1>
+
+          <section aria-labelledby="board-heading" class="content-section" style="margin-top: 0;">
+            <h2 id="board-heading" class="section-heading">Our board</h2>
+            <ul class="board-list">
+              <!-- BOARD MEMBER 1 -->
+              <li class="board-card">
+                <div class="board-photo-wrap">
+                  <img
+                    src="assets/images/board/ed-bardzik.webp"
+                    alt="Photo of Ed Bardzik"
+                    width="400"
+                    height="400"
+                    loading="lazy"
+                    decoding="async"
+                    class="board-photo"
+                  />
+                </div>
+                <div class="board-content">
+                  <div class="board-header">
+                    <h3 class="board-name">Ed Bardzik</h3>
+                    <div class="board-role-row">
+                      <span class="board-role">President and Founder</span>
+                      <span class="board-dot" aria-hidden="true">·</span>
+                      <span class="board-dog-title">Chief Mochi Officer</span>
+                    </div>
+                  </div>
+                  <div class="board-bio">
+                    <p>Ed has loved dogs ever since his family picked out a Cocker Spaniel when he was 5 years old. He has had a longtime affinity for Golden Retrievers. Mochi came into his life through a chance meeting at Kiln in 2022. He was inspired by the way Mochi touched the hearts and lives of so many people with her sweet, playful, affectionate, and loving spirit. Mochi was an integral part of how his friendships with Dylan and Sarah (see bios below) developed.</p>
+                    <p>A lifelong entrepreneur, Ed owns Respect Inc., an HR services company, and is a Colorado residential real estate agent. Ed is excited to delve into the nonprofit world and to see Mochi’s Legacy continue through this organization named in her honor.</p>
+                  </div>
+                </div>
+              </li>
+
+              <!-- BOARD MEMBER 2 -->
+              <li class="board-card">
+                <div class="board-photo-wrap">
+                  <img
+                    src="assets/images/board/dylan-agema.webp"
+                    alt="Photo of Dylan Agema"
+                    width="400"
+                    height="400"
+                    loading="lazy"
+                    decoding="async"
+                    class="board-photo"
+                  />
+                </div>
+                <div class="board-content">
+                  <div class="board-header">
+                    <h3 class="board-name">Dylan Agema</h3>
+                    <div class="board-role-row">
+                      <span class="board-role">Treasurer</span>
+                      <span class="board-dot" aria-hidden="true">·</span>
+                      <span class="board-dog-title">Gaggle of Goldens Guru</span>
+                    </div>
+                  </div>
+                  <div class="board-bio">
+                    <p>Dylan has spent the last 5 years dog-sitting across the US, with the last year spent full-time in Boulder. Ed and Dylan were drawn together through their mutual love of dogs, with Dylan’s revolving door of dogs being warmly received by Ed, Mochi, and the Kiln community. From February 2026 onwards, Dylan was lucky enough to befriend Mochi and see the lasting effect she had on people anywhere she went. Dylan helped build the Mochi’s Legacy website and is enthusiastically involved in taking photos and managing the gaggle of goldens initiative to bring Boulder’s large community of dog-loving individuals together.</p>
+                  </div>
+                </div>
+              </li>
+
+              <!-- BOARD MEMBER 3 -->
+              <li class="board-card">
+                <div class="board-photo-wrap">
+                  <img
+                    src="assets/images/board/nolan-bonnie.webp"
+                    alt="Photo of Nolan Bonnie"
+                    width="400"
+                    height="400"
+                    loading="lazy"
+                    decoding="async"
+                    class="board-photo"
+                  />
+                </div>
+                <div class="board-content">
+                  <div class="board-header">
+                    <h3 class="board-name">Nolan Bonnie</h3>
+                    <div class="board-role-row">
+                      <span class="board-role">Secretary</span>
+                      <span class="board-dot" aria-hidden="true">·</span>
+                      <span class="board-dog-title">Chief Wag Officer</span>
+                    </div>
+                  </div>
+                  <div class="board-bio">
+                    <p>Nolan is currently a Computer Science Ph.D. student at the University of Colorado Boulder. A longtime dog lover, Nolan’s family dog in California is a beautiful 14 year-old Lab named Stella who has brought much joy to his life. Nolan met Ed and Mochi on the pickleball court in 2024 and he and Mochi formed a tight bond. In February, Nolan attended Goldens in Golden with Ed, Mochi, and Sarah. As the idea for Mochi’s Legacy was coming together, Nolan suggested that Mochi’s Legacy procure a booth at Goldens in Golden in 2027. He not only championed that effort; he also worked on website setup and is advising on the process of certifying the Golden Retrievers in our program to be able to work in schools.</p>
+                  </div>
+                </div>
+              </li>
+
+              <!-- BOARD MEMBER 4 -->
+              <li class="board-card">
+                <div class="board-photo-wrap">
+                  <img
+                    src="assets/images/board/sarah-montgomery.webp"
+                    alt="Photo of Sarah Montgomery"
+                    width="400"
+                    height="400"
+                    loading="lazy"
+                    decoding="async"
+                    class="board-photo"
+                  />
+                </div>
+                <div class="board-content">
+                  <div class="board-header">
+                    <h3 class="board-name">Sarah Montgomery</h3>
+                    <div class="board-role-row">
+                      <span class="board-role">Advisor</span>
+                      <span class="board-dot" aria-hidden="true">·</span>
+                      <span class="board-dog-title">Golden Advisor</span>
+                    </div>
+                  </div>
+                  <div class="board-bio">
+                    <p>Sarah and Ed literally met because of Mochi. Ed was walking Mochi through the kitchen at Kiln in February 2025, and Sarah commented on what a beautiful dog she was and asked Ed what her name was. When Ed said “Mochi”, Sarah responded that she is an aunt to another Mochi, a male miniature Golden Doodle. Ed, Sarah, both Mochis and Nolan all attended Goldens in Golden earlier this year. Sarah helped Ed to choose the official name of the Mochi’s Legacy Golden Retriever Therapy, and she is instrumental in helping our nonprofit form alliances with companies like King Soopers.</p>
+                  </div>
+                </div>
+              </li>
+            </ul>
+          </section>
+        </section>
+        <!-- === END SECTION: OUR BOARD PAGE === -->
+
+        <!-- ===================================================================
+             VIEW 5: ADMIN DASHBOARD (SUBMISSIONS, EVENTS, EMAIL LIST & KEYS)
+             =================================================================== -->
+        <section
+          id="view-admin"
+          class="site-container site-container-app page-main admin-view"
+          hidden
+        >
+          <h1 tabindex="-1" class="sr-only">Admin Dashboard</h1>
+
+          <!-- 1. ADMIN SIGN-IN / KEY ENTRY GATE (Shown when not signed in) -->
+          <div id="admin-gate" class="admin-gate-card">
+            <div class="admin-gate-header">
+              <span class="modal-icon-badge" aria-hidden="true">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"
+                  ></path>
+                  <circle cx="16.5" cy="7.5" r=".5" fill="currentColor"></circle>
+                </svg>
+              </span>
+              <div>
+                <h2 class="admin-gate-title">Founders &amp; Admin Portal</h2>
+                <p class="admin-gate-sub">
+                  Enter your 32-character admin key (or paste your personal
+                  <code>#k=…</code> link) to open the administration dashboard.
+                </p>
+              </div>
+            </div>
+
+            <form id="admin-login-form" class="admin-gate-form" novalidate>
+              <label for="admin-key-input" class="form-label">
+                Admin key or personal link
+              </label>
+              <div class="admin-key-input-row">
+                <input
+                  id="admin-key-input"
+                  name="adminKey"
+                  type="password"
+                  required
+                  autocomplete="off"
+                  spellcheck="false"
+                  placeholder="Paste your 32-character key or #k=… link"
+                  class="form-input admin-mono-input"
+                />
+                <button
+                  type="button"
+                  id="admin-key-toggle-vis"
+                  class="admin-btn-secondary admin-btn-sm"
+                  aria-label="Show or hide key"
+                >
+                  Show
+                </button>
+              </div>
+              <p
+                id="admin-gate-error"
+                role="alert"
+                class="admin-alert-error"
+                hidden
+              ></p>
+              <div class="admin-gate-actions">
+                <button type="submit" class="admin-btn-primary">
+                  Open Admin Dashboard
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- 2. AUTHENTICATED ADMIN DASHBOARD -->
+          <div id="admin-dashboard" class="admin-dashboard" hidden>
+            <!-- Top Bar: Identity + Actions -->
+            <div class="admin-topbar">
+              <div>
+                <div class="admin-topbar-title-row">
+                  <h2 class="admin-dashboard-title">Admin Dashboard</h2>
+                  <span id="admin-role-pill" class="stage-badge tone-ok">
+                    Admin
+                  </span>
+                </div>
+                <p id="admin-welcome-text" class="admin-welcome-sub">
+                  Signed in as Founder
+                </p>
+              </div>
+              <div class="admin-topbar-actions">
+                <button
+                  type="button"
+                  id="admin-refresh-btn"
+                  class="admin-btn-secondary admin-btn-sm"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+                    <path d="M21 3v5h-5"></path>
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+                    <path d="M8 16H3v5"></path>
+                  </svg>
+                  Refresh
+                </button>
+                <button
+                  type="button"
+                  id="admin-logout-btn"
+                  class="admin-btn-secondary admin-btn-sm"
+                >
+                  Sign out
+                </button>
+              </div>
+            </div>
+
+            <!-- Optional Database Setup Notice (only shows if Supabase setup has not been run yet) -->
+            <div id="admin-supabase-setup-banner" class="admin-setup-banner" hidden>
+              <div>
+                <h3 class="admin-setup-banner-title">Supabase Database Setup Required</h3>
+                <p class="admin-setup-banner-desc">
+                  To sync live events, submissions, and keys across devices, run the one-time script in
+                  <code>supabase/admin_setup.sql</code> in your Supabase SQL Editor.
+                </p>
+              </div>
+              <div class="admin-setup-banner-actions">
+                <button type="button" id="admin-copy-sql-btn" class="admin-btn-secondary admin-btn-sm">
+                  Copy SQL Script
+                </button>
+                <button type="button" id="admin-retry-supabase-btn" class="admin-btn-primary admin-btn-sm">
+                  Check Connection
+                </button>
+              </div>
+            </div>
+
+            <!-- 4-Tab Segmented Navigation -->
+            <div
+              role="tablist"
+              aria-label="Admin sections"
+              class="admin-tablist"
+            >
+              <button
+                type="button"
+                role="tab"
+                id="admin-tab-submissions"
+                aria-selected="true"
+                aria-controls="admin-panel-submissions"
+                data-admin-tab="submissions"
+                class="admin-tab is-active"
+              >
+                <span>Submissions</span>
+                <span id="admin-badge-submissions" class="admin-tab-badge">0</span>
+              </button>
+
+              <button
+                type="button"
+                role="tab"
+                id="admin-tab-events"
+                aria-selected="false"
+                aria-controls="admin-panel-events"
+                data-admin-tab="events"
+                class="admin-tab"
+              >
+                <span>Events</span>
+                <span id="admin-badge-events" class="admin-tab-badge">0</span>
+              </button>
+
+              <button
+                type="button"
+                role="tab"
+                id="admin-tab-emails"
+                aria-selected="false"
+                aria-controls="admin-panel-emails"
+                data-admin-tab="emails"
+                class="admin-tab"
+              >
+                <span>Email List</span>
+                <span id="admin-badge-emails" class="admin-tab-badge">0</span>
+              </button>
+
+              <button
+                type="button"
+                role="tab"
+                id="admin-tab-keys"
+                aria-selected="false"
+                aria-controls="admin-panel-keys"
+                data-admin-tab="keys"
+                class="admin-tab"
+              >
+                <span>Admin Keys</span>
+              </button>
+            </div>
+
+            <!-- =============================================================
+                 TAB PANEL 1: SUBMISSIONS ("I have a dog" & "I want to volunteer")
+                 ============================================================= -->
+            <div
+              id="admin-panel-submissions"
+              role="tabpanel"
+              aria-labelledby="admin-tab-submissions"
+              class="admin-tabpanel"
+            >
+              <div class="admin-section-toolbar">
+                <p class="admin-section-desc">
+                  Review sign-ups from the “I have a dog” and “I want to
+                  volunteer” forms.
+                </p>
+                <div
+                  class="admin-filter-pills"
+                  role="group"
+                  aria-label="Filter submissions"
+                >
+                  <button
+                    type="button"
+                    data-submission-filter="all"
+                    class="admin-filter-pill is-active"
+                  >
+                    All
+                  </button>
+                  <button
+                    type="button"
+                    data-submission-filter="dogs"
+                    class="admin-filter-pill"
+                  >
+                    Dogs (<span id="admin-count-dogs">0</span>)
+                  </button>
+                  <button
+                    type="button"
+                    data-submission-filter="volunteers"
+                    class="admin-filter-pill"
+                  >
+                    Volunteers (<span id="admin-count-volunteers">0</span>)
+                  </button>
+                </div>
+              </div>
+
+              <!-- Dog Submissions Section -->
+              <section
+                id="admin-dogs-section"
+                aria-labelledby="admin-dogs-heading"
+                class="admin-sub-block"
+              >
+                <h3 id="admin-dogs-heading" class="admin-sub-heading">
+                  “I have a dog” Submissions
+                  <span id="admin-dogs-pill-count" class="admin-count-pill">0</span>
+                </h3>
+                <div id="admin-dogs-list" class="admin-cards-stack"></div>
+              </section>
+
+              <!-- Volunteer Submissions Section -->
+              <section
+                id="admin-volunteers-section"
+                aria-labelledby="admin-volunteers-heading"
+                class="admin-sub-block"
+              >
+                <h3 id="admin-volunteers-heading" class="admin-sub-heading">
+                  “I want to volunteer” Submissions
+                  <span id="admin-volunteers-pill-count" class="admin-count-pill">0</span>
+                </h3>
+                <div id="admin-volunteers-list" class="admin-cards-stack"></div>
+              </section>
+            </div>
+
+            <!-- =============================================================
+                 TAB PANEL 2: EVENTS MANAGER (ADD & DELETE EVENTS)
+                 ============================================================= -->
+            <div
+              id="admin-panel-events"
+              role="tabpanel"
+              aria-labelledby="admin-tab-events"
+              class="admin-tabpanel"
+              hidden
+            >
+              <div class="admin-section-toolbar">
+                <div>
+                  <p class="admin-section-desc">
+                    Add upcoming events or remove past ones. Published events
+                    appear automatically on the Home and Events pages (Mountain
+                    Time).
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  id="admin-toggle-event-form-btn"
+                  class="admin-btn-primary"
+                >
+                  + Add New Event
+                </button>
+              </div>
+
+              <!-- Add New Event Form Card -->
+              <form
+                id="admin-event-form"
+                class="admin-card admin-form-card"
+                hidden
+                novalidate
+              >
+                <div class="admin-card-header">
+                  <h3 class="admin-card-title">Add a New Event</h3>
+                  <button
+                    type="button"
+                    id="admin-cancel-event-btn"
+                    class="admin-btn-secondary admin-btn-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+
+                <div class="form-grid sm-2col">
+                  <label>
+                    <span class="form-label">Event title *</span>
+                    <input
+                      type="text"
+                      name="title"
+                      required
+                      maxlength="80"
+                      value="Gaggle of Goldens Walk"
+                      placeholder="e.g. Saturday Morning Gaggle Walk"
+                      class="form-input"
+                    />
+                  </label>
+
+                  <label>
+                    <span class="form-label">Category badge *</span>
+                    <input
+                      type="text"
+                      name="kind"
+                      list="admin-event-kinds"
+                      required
+                      maxlength="40"
+                      value="Gaggle walk"
+                      placeholder="e.g. Gaggle walk"
+                      class="form-input"
+                    />
+                    <datalist id="admin-event-kinds">
+                      <option value="Gaggle walk"></option>
+                      <option value="Community event"></option>
+                      <option value="School visit"></option>
+                      <option value="Library visit"></option>
+                      <option value="Senior living visit"></option>
+                    </datalist>
+                  </label>
+
+                  <label>
+                    <span class="form-label">Date (Mountain Time) *</span>
+                    <input
+                      type="date"
+                      name="date"
+                      id="admin-event-date"
+                      required
+                      class="form-input"
+                    />
+                  </label>
+
+                  <div class="form-grid-2col">
+                    <label>
+                      <span class="form-label">Start time *</span>
+                      <input
+                        type="time"
+                        name="startTime"
+                        value="09:00"
+                        required
+                        class="form-input"
+                      />
+                    </label>
+                    <label>
+                      <span class="form-label">End time *</span>
+                      <input
+                        type="time"
+                        name="endTime"
+                        value="10:30"
+                        required
+                        class="form-input"
+                      />
+                    </label>
+                  </div>
+
+                  <label>
+                    <span class="form-label">Meeting spot / Location *</span>
+                    <input
+                      type="text"
+                      name="meetingSpot"
+                      required
+                      maxlength="160"
+                      value="Foothills Community Park, Shelter A"
+                      placeholder="e.g. Pearl Street Mall · Boulder, CO"
+                      class="form-input"
+                    />
+                  </label>
+
+                  <label>
+                    <span class="form-label">Max dogs (capacity)</span>
+                    <input
+                      type="number"
+                      name="cap"
+                      min="1"
+                      max="200"
+                      value="15"
+                      class="form-input"
+                    />
+                  </label>
+
+                  <label class="sm-span-2">
+                    <span class="form-label">
+                      Notes / What to bring (optional)
+                    </span>
+                    <textarea
+                      name="notes"
+                      rows="2"
+                      maxlength="1000"
+                      placeholder="e.g. Bring water, poop bags, and a standard 6-foot leash."
+                      class="form-input"
+                    ></textarea>
+                  </label>
+                </div>
+
+                <p
+                  id="admin-event-form-error"
+                  role="alert"
+                  class="admin-alert-error"
+                  hidden
+                ></p>
+
+                <div class="admin-form-actions">
+                  <button
+                    type="submit"
+                    id="admin-event-submit-btn"
+                    class="admin-btn-primary"
+                  >
+                    Publish Event
+                  </button>
+                  <button
+                    type="button"
+                    id="admin-cancel-event-btn-bottom"
+                    class="admin-btn-secondary"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+
+              <!-- Current Events List -->
+              <section
+                aria-labelledby="admin-events-list-heading"
+                class="admin-sub-block"
+              >
+                <h3 id="admin-events-list-heading" class="admin-sub-heading">
+                  Scheduled Events
+                  <span id="admin-events-pill-count" class="admin-count-pill">0</span>
+                </h3>
+                <div id="admin-events-list" class="admin-cards-stack"></div>
+              </section>
+            </div>
+
+            <!-- =============================================================
+                 TAB PANEL 3: EMAIL LIST ("KEEP ME POSTED" SUBSCRIBERS & BCC)
+                 ============================================================= -->
+            <div
+              id="admin-panel-emails"
+              role="tabpanel"
+              aria-labelledby="admin-tab-emails"
+              class="admin-tabpanel"
+              hidden
+            >
+              <div class="admin-card admin-bcc-card">
+                <div class="admin-bcc-top">
+                  <div>
+                    <h3 class="admin-card-title">
+                      “Keep me posted” Mailing List
+                    </h3>
+                    <p class="admin-section-desc">
+                      Copy all subscriber email addresses in one click and paste
+                      them into the <strong>BCC</strong> field of your email
+                      client so everyone’s address stays private.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    id="admin-copy-bcc-btn"
+                    class="admin-btn-primary"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
+                      <path
+                        d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"
+                      ></path>
+                    </svg>
+                    <span id="admin-copy-bcc-label">Copy all emails for BCC</span>
+                  </button>
+                </div>
+
+                <div class="admin-bcc-preview-wrap">
+                  <label for="admin-bcc-input" class="form-label">
+                    BCC copy-paste string (<span id="admin-emails-total">0</span>
+                    subscribers)
+                  </label>
+                  <input
+                    id="admin-bcc-input"
+                    type="text"
+                    readonly
+                    placeholder="No subscribers yet."
+                    class="form-input admin-mono-input"
+                  />
+                </div>
+              </div>
+
+              <section
+                aria-labelledby="admin-subscribers-heading"
+                class="admin-sub-block"
+              >
+                <h3 id="admin-subscribers-heading" class="admin-sub-heading">
+                  Subscribers
+                  <span id="admin-subscribers-pill-count" class="admin-count-pill">0</span>
+                </h3>
+                <div id="admin-emails-list" class="admin-cards-stack"></div>
+              </section>
+            </div>
+
+            <!-- =============================================================
+                 TAB PANEL 4: ADMIN KEYS & SUPER ADMIN ACCESS CONTROL
+                 ============================================================= -->
+            <div
+              id="admin-panel-keys"
+              role="tabpanel"
+              aria-labelledby="admin-tab-keys"
+              class="admin-tabpanel"
+              hidden
+            >
+              <!-- Active Session Key Card -->
+              <div class="admin-card">
+                <h3 class="admin-card-title">Your Personal Admin Link</h3>
+                <p class="admin-section-desc">
+                  Bookmark your personal login link below or save your
+                  32-character key. Opening this link signs you straight into
+                  the Admin Dashboard.
+                </p>
+                <div class="admin-key-display-row">
+                  <input
+                    id="admin-own-link-input"
+                    type="text"
+                    readonly
+                    class="form-input admin-mono-input"
+                  />
+                  <button
+                    type="button"
+                    id="admin-copy-own-link-btn"
+                    class="admin-btn-secondary"
+                  >
+                    Copy My Link
+                  </button>
+                </div>
+              </div>
+
+              <!-- Generate a New Admin Key -->
+              <div class="admin-card admin-sub-block">
+                <h3 class="admin-card-title">Generate a New Admin Key</h3>
+                <p class="admin-section-desc">
+                  Issue a new 32-character admin key for a board member or
+                  trusted volunteer coordinator.
+                </p>
+
+                <form id="admin-generate-key-form" class="admin-keygen-form" novalidate>
+                  <div class="form-grid sm-2col">
+                    <label>
+                      <span class="form-label">Admin name or label *</span>
+                      <input
+                        type="text"
+                        name="keyName"
+                        required
+                        maxlength="80"
+                        placeholder="e.g. Jane Doe — Event Coordinator"
+                        class="form-input"
+                      />
+                    </label>
+                    <label>
+                      <span class="form-label">Email (optional)</span>
+                      <input
+                        type="email"
+                        name="keyEmail"
+                        maxlength="160"
+                        placeholder="e.g. jane@example.com"
+                        class="form-input"
+                      />
+                    </label>
+                  </div>
+                  <div class="admin-form-actions">
+                    <button type="submit" class="admin-btn-primary">
+                      + Generate New Admin Key
+                    </button>
+                  </div>
+                </form>
+
+                <!-- Newly Generated Key Callout -->
+                <div id="admin-new-key-result" class="admin-new-key-box" hidden>
+                  <p class="admin-new-key-title">
+                    New admin key created for
+                    <strong id="admin-new-key-owner"></strong>!
+                  </p>
+                  <p class="admin-section-desc">
+                    Send them this link or 32-character key so they can sign in:
+                  </p>
+                  <div class="admin-key-display-row">
+                    <input
+                      id="admin-new-key-link-input"
+                      type="text"
+                      readonly
+                      class="form-input admin-mono-input"
+                    />
+                    <button
+                      type="button"
+                      id="admin-copy-new-key-link-btn"
+                      class="admin-btn-primary admin-btn-sm"
+                    >
+                      Copy Login Link
+                    </button>
+                    <button
+                      type="button"
+                      id="admin-copy-new-key-raw-btn"
+                      class="admin-btn-secondary admin-btn-sm"
+                    >
+                      Copy Key Only
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Super Admin Only: View All Issued Keys & Revoke -->
+              <section
+                id="admin-super-keys-section"
+                aria-labelledby="admin-super-keys-heading"
+                class="admin-sub-block"
+                hidden
+              >
+                <div class="admin-super-header">
+                  <div>
+                    <h3 id="admin-super-keys-heading" class="admin-sub-heading">
+                      All Issued Admin Keys
+                      <span class="stage-badge tone-honey">Super Admin Only</span>
+                    </h3>
+                    <p class="admin-section-desc">
+                      As Super Admin (Nolan Bonnie), you can view every issued
+                      admin key, copy login links for board members, and revoke
+                      any key if needed.
+                    </p>
+                  </div>
+                </div>
+                <div id="admin-keys-list" class="admin-cards-stack"></div>
+              </section>
+
+              <!-- Non-Super-Admin Notice -->
+              <p id="admin-non-super-note" class="admin-non-super-note" hidden>
+                Viewing all issued keys and revoking keys is restricted to the
+                Super Admin (Nolan Bonnie).
+              </p>
+            </div>
+          </div>
+
+        </section>
+      </main>
+
+      <!-- Floating toast message (used by forms and the Admin Dashboard) -->
+      <div
+        id="admin-toast"
+        role="status"
+        aria-live="polite"
+        class="admin-toast"
+        hidden
+      >
+        <span id="admin-toast-text"></span>
+      </div>
+
+      <!-- =====================================================================
+           SITE FOOTER (NEWSLETTER & LEGAL / MEMORIAL BAR)
+           ===================================================================== -->
+      <footer>
+        <!-- === SECTION: NEWSLETTER SIGNUP (SAFE TO EDIT TEXT BELOW) === -->
+        <div class="footer-newsletter-wrap">
+          <form id="newsletter-form" class="newsletter-form">
+            <p class="footer-heading">Kickoff details and squad news.</p>
+
+            <div class="newsletter-pill">
+              <label for="newsletter-name" class="sr-only">Your name</label>
+              <input
+                id="newsletter-name"
+                type="text"
+                name="name"
+                required
+                maxlength="120"
+                placeholder="Your name"
+                autocomplete="name"
+                class="newsletter-input"
+              />
+
+              <span aria-hidden="true" class="newsletter-divider"></span>
+
+              <label for="newsletter-email" class="sr-only">Email</label>
+              <input
+                id="newsletter-email"
+                type="email"
+                name="email"
+                required
+                maxlength="254"
+                placeholder="you@email.com"
+                autocomplete="email"
+                class="newsletter-input"
+              />
+
+              <button type="submit" class="newsletter-submit">
+                Keep me posted
+              </button>
+            </div>
+
+            <p id="newsletter-status" role="status" class="newsletter-status" hidden></p>
+          </form>
+        </div>
+        <!-- === END SECTION: NEWSLETTER SIGNUP === -->
+
+        <!-- === SECTION: FOOTER MEMORIAL & LEGAL TEXT (SAFE TO EDIT TEXT BELOW) === -->
+        <div class="footer-bottom-bar">
+          <div class="footer-bottom-links">
+            <p class="footer-memorial">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="11" cy="4" r="2"></circle>
+                <circle cx="18" cy="8" r="2"></circle>
+                <circle cx="20" cy="16" r="2"></circle>
+                <path
+                  d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z"
+                ></path>
+              </svg>
+              In memory of Mochi
+            </p>
+            <a href="#about" data-nav="about" class="footer-about-link">
+              About us
+            </a>
+          </div>
+
+          <p class="footer-legal">
+            Mochis Legacy Golden Retriever Therapy is a Colorado nonprofit corporation with a federal tax-exempt application pending with the IRS. Donations are not currently tax-deductible but will be retroactively deductible to the date of our incorporation if our application is approved. Our EIN is: 42-5254-517
+          </p>
+        </div>
+        <!-- === END SECTION: FOOTER MEMORIAL & LEGAL TEXT === -->
+      </footer>
+    </div>
+
+    <!-- =======================================================================
+         MODAL 1: "I HAVE A DOG" SIGNUP DIALOG
+         ======================================================================= -->
+    <!-- === SECTION: DOG SIGNUP MODAL (SAFE TO EDIT TEXT BELOW) === -->
+    <dialog
+      id="modal-dog"
+      aria-labelledby="modal-dog-title"
+      aria-describedby="modal-dog-blurb"
+      class="signup-modal"
+    >
+      <span class="modal-grabber" aria-hidden="true"></span>
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon-badge">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="11" cy="4" r="2"></circle>
+              <circle cx="18" cy="8" r="2"></circle>
+              <circle cx="20" cy="16" r="2"></circle>
+              <path
+                d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z"
+              ></path>
+            </svg>
+          </span>
+          <h2 id="modal-dog-title" class="modal-title">Join with your dog</h2>
+        </div>
+        <button
+          type="button"
+          data-close-modal
+          aria-label="Close"
+          class="modal-close-btn"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M18 6 6 18"></path>
+            <path d="m6 6 12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <p id="modal-dog-blurb" class="modal-blurb">
+          Tell us about you and your dog. A founder will reach out within a week to say hello and share upcoming walk details.
+        </p>
+
+        <form id="form-dog" class="modal-form">
+          <fieldset class="form-grid sm-2col">
+            <label>
+              <span class="form-label">Your name *</span>
+              <input
+                name="ownerName"
+                type="text"
+                required
+                autocomplete="name"
+                maxlength="120"
+                class="form-input"
+              />
+            </label>
+            <label>
+              <span class="form-label">Email *</span>
+              <input
+                name="email"
+                type="email"
+                required
+                autocomplete="email"
+                maxlength="254"
+                class="form-input"
+              />
+            </label>
+            <label class="sm-span-2">
+              <span class="form-label">Your dog’s name *</span>
+              <input
+                name="dogName"
+                type="text"
+                required
+                maxlength="60"
+                class="form-input"
+              />
+            </label>
+            <div class="form-grid-2col sm-span-2">
+              <label>
+                <span class="form-label">Breed *</span>
+                <input
+                  name="breed"
+                  type="text"
+                  required
+                  maxlength="80"
+                  autocomplete="off"
+                  placeholder="e.g. Lab mix"
+                  class="form-input"
+                />
+              </label>
+              <label>
+                <span class="form-label">Age *</span>
+                <input
+                  name="age"
+                  type="text"
+                  required
+                  maxlength="40"
+                  autocomplete="off"
+                  placeholder="e.g. 3 years"
+                  class="form-input"
+                />
+              </label>
+            </div>
+            <label class="sm-span-2">
+              <span class="form-label">City you live in *</span>
+              <input
+                name="city"
+                type="text"
+                required
+                maxlength="80"
+                autocomplete="address-level2"
+                placeholder="e.g. Boulder"
+                class="form-input"
+              />
+            </label>
+            <label class="sm-span-2">
+              <span class="form-label">Anything we should know about your dog?</span>
+              <textarea
+                name="notes"
+                rows="3"
+                maxlength="2000"
+                class="form-input"
+              ></textarea>
+            </label>
+          </fieldset>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button type="submit" form="form-dog" class="modal-submit-btn btn-dog">
+          Join with my dog
+        </button>
+      </div>
+    </dialog>
+    <!-- === END SECTION: DOG SIGNUP MODAL === -->
+
+    <!-- =======================================================================
+         MODAL 2: "I WANT TO VOLUNTEER" SIGNUP DIALOG
+         ======================================================================= -->
+    <!-- === SECTION: VOLUNTEER SIGNUP MODAL (SAFE TO EDIT TEXT BELOW) === -->
+    <dialog
+      id="modal-volunteer"
+      aria-labelledby="modal-volunteer-title"
+      aria-describedby="modal-volunteer-blurb"
+      class="signup-modal"
+    >
+      <span class="modal-grabber" aria-hidden="true"></span>
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon-badge">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="11" cy="4" r="2"></circle>
+              <circle cx="18" cy="8" r="2"></circle>
+              <circle cx="20" cy="16" r="2"></circle>
+              <path
+                d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z"
+              ></path>
+            </svg>
+          </span>
+          <h2 id="modal-volunteer-title" class="modal-title">Lend a hand</h2>
+        </div>
+        <button
+          type="button"
+          data-close-modal
+          aria-label="Close"
+          class="modal-close-btn"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M18 6 6 18"></path>
+            <path d="m6 6 12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <p id="modal-volunteer-blurb" class="modal-blurb">
+          Tell us who you are and how you’d like to help. No dog and no experience needed; we’ll find you a job that fits.
+        </p>
+
+        <form id="form-volunteer" class="modal-form">
+          <fieldset class="form-grid">
+            <label>
+              <span class="form-label">Your name *</span>
+              <input
+                name="name"
+                type="text"
+                required
+                autocomplete="name"
+                maxlength="120"
+                class="form-input"
+              />
+            </label>
+            <label>
+              <span class="form-label">Email *</span>
+              <input
+                name="email"
+                type="email"
+                required
+                autocomplete="email"
+                maxlength="254"
+                class="form-input"
+              />
+            </label>
+            <fieldset>
+              <legend class="form-label">Can you help with any of these?</legend>
+              <div class="checkbox-list">
+                <label class="checkbox-item">
+                  <input type="checkbox" name="skills" value="Legal" />
+                  Legal
+                </label>
+                <label class="checkbox-item">
+                  <input type="checkbox" name="skills" value="Accounting" />
+                  Accounting
+                </label>
+                <label class="checkbox-item">
+                  <input type="checkbox" name="skills" value="City permits" />
+                  City permits
+                </label>
+                <label class="checkbox-item">
+                  <input
+                    type="checkbox"
+                    name="skills"
+                    value="Communications & social media"
+                  />
+                  Communications &amp; social media
+                </label>
+              </div>
+            </fieldset>
+            <label>
+              <span class="form-label">How would you like to help?</span>
+              <textarea
+                name="interests"
+                rows="3"
+                maxlength="1000"
+                class="form-input"
+              ></textarea>
+            </label>
+          </fieldset>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          type="submit"
+          form="form-volunteer"
+          class="modal-submit-btn btn-volunteer"
+        >
+          Volunteer with us
+        </button>
+      </div>
+    </dialog>
+    <!-- === END SECTION: VOLUNTEER SIGNUP MODAL === -->
+
+    <!-- Minimal Vanilla JavaScript -->
+    <script src="assets/js/main.js" defer></script>
   </body>
 </html>
