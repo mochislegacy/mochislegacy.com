@@ -387,6 +387,8 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
       left: 0,
       active: false,
       moved: false,
+      pointerId: null,
+      downTile: null,
     };
 
     function getVisibleTiles() {
@@ -432,24 +434,44 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
       });
     });
 
+    stripEl.addEventListener("dragstart", (event) => {
+      event.preventDefault();
+    });
+
     stripEl.addEventListener("pointerdown", (event) => {
+      const targetEl =
+        event.target instanceof Element ? event.target : null;
+      dragState.downTile = targetEl
+        ? targetEl.closest(".photo-strip-tile:not([hidden])")
+        : null;
+
       if (event.pointerType === "mouse" && event.button === 0) {
         dragState.x = event.clientX;
         dragState.left = stripEl.scrollLeft;
         dragState.active = true;
         dragState.moved = false;
-        stripEl.setPointerCapture(event.pointerId);
+        dragState.pointerId = event.pointerId;
       }
     });
 
     stripEl.addEventListener("pointermove", (event) => {
       if (event.pointerType !== "mouse" || !dragState.active) return;
       const deltaX = event.clientX - dragState.x;
-      if (Math.abs(deltaX) > 4) {
+      if (!dragState.moved && Math.abs(deltaX) > 6) {
         dragState.moved = true;
+        stripEl.dataset.dragging = "true";
+        if (
+          dragState.pointerId !== null &&
+          typeof stripEl.setPointerCapture === "function"
+        ) {
+          try {
+            stripEl.setPointerCapture(dragState.pointerId);
+          } catch (_) {
+            // Ignore if pointer is no longer active
+          }
+        }
       }
       if (dragState.moved) {
-        stripEl.dataset.dragging = "true";
         stripEl.scrollLeft = dragState.left - deltaX;
       }
     });
@@ -457,13 +479,23 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
     const endDrag = (event) => {
       dragState.active = false;
       delete stripEl.dataset.dragging;
+      const pid =
+        event && event.pointerId !== undefined
+          ? event.pointerId
+          : dragState.pointerId;
       if (
-        event.pointerId !== undefined &&
+        pid !== null &&
+        pid !== undefined &&
         stripEl.hasPointerCapture &&
-        stripEl.hasPointerCapture(event.pointerId)
+        stripEl.hasPointerCapture(pid)
       ) {
-        stripEl.releasePointerCapture(event.pointerId);
+        try {
+          stripEl.releasePointerCapture(pid);
+        } catch (_) {
+          // Ignore release errors
+        }
       }
+      dragState.pointerId = null;
     };
 
     stripEl.addEventListener("pointerup", endDrag);
@@ -476,21 +508,213 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
           event.preventDefault();
           event.stopPropagation();
           dragState.moved = false;
+          dragState.downTile = null;
         }
       },
       true
     );
 
-    const controller = { stripEl, listEl, center, getVisibleTiles };
+    function resolveClickedTile(event) {
+      const targetEl =
+        event.target instanceof Element ? event.target : null;
+      let tile = targetEl
+        ? targetEl.closest(".photo-strip-tile:not([hidden])")
+        : null;
+      if (!tile && dragState.downTile && !dragState.downTile.hidden) {
+        tile = dragState.downTile;
+      }
+      if (
+        !tile &&
+        typeof event.clientX === "number" &&
+        typeof event.clientY === "number"
+      ) {
+        const hit = document.elementFromPoint(event.clientX, event.clientY);
+        if (hit) {
+          tile = hit.closest(".photo-strip-tile:not([hidden])");
+        }
+      }
+      dragState.downTile = null;
+      return tile && stripEl.contains(tile) ? tile : null;
+    }
+
+    const controller = {
+      stripEl,
+      listEl,
+      center,
+      getVisibleTiles,
+      resolveClickedTile,
+    };
     if (stripEl.id) {
       photoStripControllers.set(stripEl.id, controller);
     }
     return controller;
   }
 
-  // Initialize all photo strips on the page
+  /* ==========================================================================
+     1b. Full-Size Photo Gallery Lightbox
+     ========================================================================== */
+
+  const lightboxModal = document.getElementById("modal-lightbox");
+  const lightboxImage = document.getElementById("lightbox-image");
+  const lightboxCounter = document.getElementById("lightbox-counter");
+  const lightboxCaption = document.getElementById("lightbox-caption");
+  const lightboxPrevBtn = document.getElementById("lightbox-prev-btn");
+  const lightboxNextBtn = document.getElementById("lightbox-next-btn");
+  const lightboxCloseBtn = document.getElementById("lightbox-close-btn");
+
+  const lightboxState = {
+    items: [],
+    index: 0,
+  };
+
+  function resolveFullSizeImageUrl(imgEl) {
+    if (!imgEl) return "";
+    const srcset = imgEl.getAttribute("srcset");
+    if (srcset) {
+      const candidates = srcset
+        .split(",")
+        .map((entry) => {
+          const parts = entry.trim().split(/\s+/);
+          const url = parts[0] || "";
+          const widthMatch = /^(\d+)w$/.exec(parts[1] || "");
+          const width = widthMatch ? Number(widthMatch[1]) : 0;
+          return { url, width };
+        })
+        .filter((c) => Boolean(c.url))
+        .sort((a, b) => b.width - a.width);
+      if (candidates.length > 0) {
+        return candidates[0].url;
+      }
+    }
+    return imgEl.getAttribute("src") || imgEl.currentSrc || imgEl.src || "";
+  }
+
+  function renderLightboxSlide() {
+    if (!lightboxImage || lightboxState.items.length === 0) return;
+    const total = lightboxState.items.length;
+    const currentIndex =
+      ((lightboxState.index % total) + total) % total;
+    lightboxState.index = currentIndex;
+    const item = lightboxState.items[currentIndex];
+
+    lightboxImage.src = item.src;
+    lightboxImage.alt = item.alt || "Gallery photo";
+
+    if (lightboxCounter) {
+      lightboxCounter.textContent = `${currentIndex + 1} / ${total}`;
+    }
+    if (lightboxCaption) {
+      lightboxCaption.textContent = item.alt || "";
+      lightboxCaption.hidden = !item.alt;
+    }
+    if (lightboxPrevBtn) {
+      lightboxPrevBtn.hidden = total <= 1;
+    }
+    if (lightboxNextBtn) {
+      lightboxNextBtn.hidden = total <= 1;
+    }
+  }
+
+  function openLightbox(items, startIndex = 0) {
+    if (!lightboxModal || !Array.isArray(items) || items.length === 0) return;
+    lightboxState.items = items;
+    lightboxState.index = startIndex;
+    renderLightboxSlide();
+    if (typeof lightboxModal.showModal === "function" && !lightboxModal.open) {
+      lightboxModal.showModal();
+    }
+  }
+
+  function stepLightbox(delta) {
+    if (!lightboxModal || !lightboxModal.open) return;
+    if (lightboxState.items.length <= 1) return;
+    lightboxState.index =
+      (lightboxState.index + delta + lightboxState.items.length) %
+      lightboxState.items.length;
+    renderLightboxSlide();
+  }
+
+  function closeLightbox() {
+    if (lightboxModal && lightboxModal.open) {
+      lightboxModal.close();
+    }
+  }
+
+  if (lightboxPrevBtn) {
+    lightboxPrevBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      stepLightbox(-1);
+    });
+  }
+
+  if (lightboxNextBtn) {
+    lightboxNextBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      stepLightbox(1);
+    });
+  }
+
+  if (lightboxCloseBtn) {
+    lightboxCloseBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      closeLightbox();
+    });
+  }
+
+  if (lightboxModal) {
+    lightboxModal.addEventListener("click", (event) => {
+      const clickedInsideFigure = event.target.closest(".lightbox-figure");
+      const clickedNavOrClose = event.target.closest(
+        ".lightbox-nav-btn, .lightbox-close-btn"
+      );
+      if (!clickedInsideFigure && !clickedNavOrClose) {
+        closeLightbox();
+      }
+    });
+  }
+
+  window.addEventListener("keydown", (event) => {
+    if (!lightboxModal || !lightboxModal.open) return;
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      stepLightbox(-1);
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      stepLightbox(1);
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      closeLightbox();
+    }
+  });
+
+  // Initialize all photo strips on the page and attach click-to-magnify
   document.querySelectorAll(".photo-strip").forEach((el) => {
-    initPhotoStrip(el);
+    const ctrl = initPhotoStrip(el);
+    if (!ctrl) return;
+
+    el.addEventListener("click", (event) => {
+      const clickedTile = ctrl.resolveClickedTile(event);
+      if (!clickedTile) return;
+
+      const visibleTiles = ctrl.getVisibleTiles();
+      const clickedIndex = visibleTiles.indexOf(clickedTile);
+      if (clickedIndex === -1) return;
+
+      const items = visibleTiles
+        .map((tile) => {
+          const img = tile.querySelector("img");
+          if (!img) return null;
+          return {
+            src: resolveFullSizeImageUrl(img),
+            alt: img.getAttribute("alt") || "",
+          };
+        })
+        .filter(Boolean);
+
+      if (items.length > 0) {
+        openLightbox(items, clickedIndex);
+      }
+    });
   });
 
   const photoStrip = document.getElementById("photo-strip");
@@ -735,23 +959,70 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
     writeJsonStorage(STORAGE_KEYS.deletedIds, Array.from(set));
   }
 
+  function getEventSignature(ev) {
+    if (!ev) return "";
+    const title = String(ev.title || "").trim().toLowerCase();
+    const startMs = Date.parse(ev.starts_at || "");
+    const startKey = Number.isNaN(startMs)
+      ? String(ev.starts_at || "")
+      : String(startMs);
+    return `${title}::${startKey}`;
+  }
+
+  function pruneSyncedLocalEvents(remoteEvents) {
+    if (!Array.isArray(remoteEvents)) return [];
+    const localEvents = readJsonStorage(STORAGE_KEYS.localEvents, []);
+    if (localEvents.length === 0) return [];
+
+    const remoteIds = new Set(remoteEvents.map((e) => String(e?.id || "")));
+    const remoteSignatures = new Set(
+      remoteEvents.map((e) => getEventSignature(e)).filter(Boolean)
+    );
+
+    const remaining = localEvents.filter((le) => {
+      if (!le || !le.id) return false;
+      const idStr = String(le.id);
+      if (remoteIds.has(idStr)) return false;
+      const sig = getEventSignature(le);
+      if (sig && remoteSignatures.has(sig)) return false;
+      // Clean up legacy synthetic evt-* entries once Supabase is active and responding
+      if (idStr.startsWith("evt-")) return false;
+      return true;
+    });
+
+    if (remaining.length !== localEvents.length) {
+      writeJsonStorage(STORAGE_KEYS.localEvents, remaining);
+    }
+    return remaining;
+  }
+
   async function fetchPublicUpcomingEvents() {
     const rpcRes = await callSupabaseRpc("mochi_upcoming_events", {});
     const remoteEvents =
       rpcRes.ok && Array.isArray(rpcRes.data) ? rpcRes.data : [];
-    const localEvents = readJsonStorage(STORAGE_KEYS.localEvents, []);
+    const localEvents = rpcRes.ok
+      ? pruneSyncedLocalEvents(remoteEvents)
+      : readJsonStorage(STORAGE_KEYS.localEvents, []);
     const deletedIds = getDeletedIdsSet();
     const nowMs = Date.now();
 
     const mergedMap = new Map();
+    const seenSignatures = new Set();
+
     [...remoteEvents, ...localEvents].forEach((ev) => {
       if (!ev || !ev.id) return;
-      if (deletedIds.has(String(ev.id))) return;
+      const idStr = String(ev.id);
+      if (deletedIds.has(idStr)) return;
       if (ev.notes === "[DELETED]") return;
       if (ev.status && ev.status !== "published") return;
       const endsMs = Date.parse(ev.ends_at || ev.starts_at);
       if (!Number.isNaN(endsMs) && endsMs < nowMs) return;
-      mergedMap.set(String(ev.id), ev);
+
+      const sig = getEventSignature(ev);
+      if (mergedMap.has(idStr) || (sig && seenSignatures.has(sig))) return;
+
+      mergedMap.set(idStr, ev);
+      if (sig) seenSignatures.add(sig);
     });
 
     return Array.from(mergedMap.values()).sort((a, b) =>
@@ -1688,17 +1959,27 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
       publicEventsRes.ok && Array.isArray(publicEventsRes.data)
         ? publicEventsRes.data
         : [];
-    const localEvents = readJsonStorage(STORAGE_KEYS.localEvents, []);
+    const allRemoteEvents = [...remoteAdminEvents, ...remotePublicEvents];
+    const localEvents =
+      adminEventsRes.ok || publicEventsRes.ok
+        ? pruneSyncedLocalEvents(allRemoteEvents)
+        : readJsonStorage(STORAGE_KEYS.localEvents, []);
 
     const eventsMap = new Map();
-    [...remoteAdminEvents, ...remotePublicEvents, ...localEvents].forEach(
-      (ev) => {
-        if (!ev || !ev.id) return;
-        if (deletedIds.has(String(ev.id))) return;
-        if (ev.notes === "[DELETED]") return;
-        eventsMap.set(String(ev.id), ev);
-      }
-    );
+    const seenEventSignatures = new Set();
+
+    [...allRemoteEvents, ...localEvents].forEach((ev) => {
+      if (!ev || !ev.id) return;
+      const idStr = String(ev.id);
+      if (deletedIds.has(idStr)) return;
+      if (ev.notes === "[DELETED]") return;
+
+      const sig = getEventSignature(ev);
+      if (eventsMap.has(idStr) || (sig && seenEventSignatures.has(sig))) return;
+
+      eventsMap.set(idStr, ev);
+      if (sig) seenEventSignatures.add(sig);
+    });
     adminState.events = Array.from(eventsMap.values()).sort((a, b) =>
       String(a.starts_at || "").localeCompare(String(b.starts_at || ""))
     );
@@ -2393,13 +2674,35 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
   const adminEventDateInput = document.getElementById("admin-event-date");
   const adminEventFormError = document.getElementById("admin-event-form-error");
 
+  function resetAddEventForm() {
+    if (!adminEventForm) return;
+    adminEventForm.reset();
+    const titleInput = adminEventForm.elements.namedItem("title");
+    const kindInput = adminEventForm.elements.namedItem("kind");
+    const dateInput = adminEventForm.elements.namedItem("date");
+    const startInput = adminEventForm.elements.namedItem("startTime");
+    const endInput = adminEventForm.elements.namedItem("endTime");
+    const spotInput = adminEventForm.elements.namedItem("meetingSpot");
+    const capInput = adminEventForm.elements.namedItem("cap");
+    const notesInput = adminEventForm.elements.namedItem("notes");
+
+    if (titleInput) titleInput.value = "Gaggle of Goldens Walk";
+    if (kindInput) kindInput.value = "Gaggle walk";
+    if (dateInput) dateInput.value = "";
+    if (startInput) startInput.value = "";
+    if (endInput) endInput.value = "";
+    if (spotInput) spotInput.value = "";
+    if (capInput) capInput.value = "";
+    if (notesInput) notesInput.value = "";
+  }
+
   function openAddEventForm(open) {
     if (!adminEventForm || !toggleEventFormBtn) return;
     adminEventForm.hidden = !open;
     toggleEventFormBtn.hidden = open;
     if (adminEventFormError) adminEventFormError.hidden = true;
-    if (open && adminEventDateInput && !adminEventDateInput.value) {
-      adminEventDateInput.value = getDefaultUpcomingSaturday();
+    if (open) {
+      resetAddEventForm();
     }
   }
 
@@ -2422,22 +2725,36 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
 
       const fd = new FormData(adminEventForm);
       const title = String(fd.get("title") || "").trim();
-      const kind = String(fd.get("kind") || "").trim() || "Gaggle walk";
+      const kind = String(fd.get("kind") || "").trim();
       const date = String(fd.get("date") || "").trim();
       const startTime = String(fd.get("startTime") || "").trim();
       const endTime = String(fd.get("endTime") || "").trim();
       const meetingSpot = String(fd.get("meetingSpot") || "").trim();
-      const cap = Math.max(1, Math.min(200, Number(fd.get("cap")) || 15));
+      const rawCap = String(fd.get("cap") || "").trim();
+      const parsedCap = Number(rawCap);
       const notes = String(fd.get("notes") || "").trim() || null;
 
-      if (!title || !date || !startTime || !endTime || !meetingSpot) {
+      if (
+        !title ||
+        !kind ||
+        !date ||
+        !startTime ||
+        !endTime ||
+        !meetingSpot ||
+        !rawCap ||
+        !Number.isInteger(parsedCap) ||
+        parsedCap < 1 ||
+        parsedCap > 200
+      ) {
         if (adminEventFormError) {
           adminEventFormError.textContent =
-            "Please fill in the title, date, start/end time, and meeting spot.";
+            "Please fill in the title, category, date, start/end time, meeting spot, and max dogs (1–200).";
           adminEventFormError.hidden = false;
         }
         return;
       }
+
+      const cap = parsedCap;
 
       if (endTime <= startTime) {
         if (adminEventFormError) {
@@ -2457,7 +2774,9 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
         submitBtn.textContent = "Publishing…";
       }
 
-      let savedEvent = null;
+      let savedRemotely = false;
+      let lastRpcError = null;
+
       if (adminState.activeKey) {
         let rpcRes = await callSupabaseRpc("mochi_k_add_event", {
           p_key: adminState.activeKey,
@@ -2489,51 +2808,54 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
             p_notes: notes,
           });
         }
+
         if (rpcRes.ok) {
-          savedEvent =
-            rpcRes.data && rpcRes.data.id
-              ? rpcRes.data
-              : {
-                  id: `evt-${Date.now()}`,
-                  title,
-                  kind,
-                  min_stage: "gaggle",
-                  starts_at: startsAt,
-                  ends_at: endsAt,
-                  meeting_spot: meetingSpot,
-                  cap,
-                  confirmed: 0,
-                  status: "published",
-                  notes,
-                };
+          savedRemotely = true;
+        } else {
+          lastRpcError = rpcRes.message;
         }
       }
 
-      if (!savedEvent) {
-        savedEvent = {
-          id: `evt-${Date.now()}`,
-          title,
-          kind,
-          min_stage: "gaggle",
-          starts_at: startsAt,
-          ends_at: endsAt,
-          meeting_spot: meetingSpot,
-          cap,
-          confirmed: 0,
-          status: "published",
-          notes,
-        };
+      // Only fall back to localStorage if Supabase SQL setup has not been run yet
+      if (!savedRemotely) {
+        if (adminState.supabaseNeedsSetup) {
+          const fallbackEvent = {
+            id: `evt-${Date.now()}`,
+            title,
+            kind,
+            min_stage: "gaggle",
+            starts_at: startsAt,
+            ends_at: endsAt,
+            meeting_spot: meetingSpot,
+            cap,
+            confirmed: 0,
+            status: "published",
+            notes,
+          };
+          const localEvents = readJsonStorage(STORAGE_KEYS.localEvents, []);
+          localEvents.push(fallbackEvent);
+          writeJsonStorage(STORAGE_KEYS.localEvents, localEvents);
+        } else {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Publish Event";
+          }
+          if (adminEventFormError) {
+            adminEventFormError.textContent =
+              lastRpcError ||
+              "Could not save event to the database. Please check your connection and try again.";
+            adminEventFormError.hidden = false;
+          }
+          return;
+        }
       }
-
-      const localEvents = readJsonStorage(STORAGE_KEYS.localEvents, []);
-      localEvents.push(savedEvent);
-      writeJsonStorage(STORAGE_KEYS.localEvents, localEvents);
 
       if (submitBtn) {
         submitBtn.disabled = false;
         submitBtn.textContent = "Publish Event";
       }
 
+      resetAddEventForm();
       openAddEventForm(false);
       await loadAllAdminData();
       showAdminToast(`Published "${title}"!`);
