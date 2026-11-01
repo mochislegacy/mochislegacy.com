@@ -557,7 +557,6 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
   const lightboxModal = document.getElementById("modal-lightbox");
   const lightboxImage = document.getElementById("lightbox-image");
   const lightboxCounter = document.getElementById("lightbox-counter");
-  const lightboxCaption = document.getElementById("lightbox-caption");
   const lightboxPrevBtn = document.getElementById("lightbox-prev-btn");
   const lightboxNextBtn = document.getElementById("lightbox-next-btn");
   const lightboxCloseBtn = document.getElementById("lightbox-close-btn");
@@ -602,10 +601,6 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
 
     if (lightboxCounter) {
       lightboxCounter.textContent = `${currentIndex + 1} / ${total}`;
-    }
-    if (lightboxCaption) {
-      lightboxCaption.textContent = item.alt || "";
-      lightboxCaption.hidden = !item.alt;
     }
     if (lightboxPrevBtn) {
       lightboxPrevBtn.hidden = total <= 1;

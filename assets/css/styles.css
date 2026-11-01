@@ -3002,18 +3002,8 @@ button {
 
 .lightbox-caption-bar {
   display: inline-flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  max-width: min(90vw, 680px);
-  padding: 8px 16px;
-  border-radius: var(--radius-pill);
-  background-color: rgba(255, 248, 235, 0.94);
-  border: 1px solid var(--color-sandstone);
-  color: var(--color-espresso);
-  box-shadow: var(--shadow-card);
-  text-align: center;
 }
 
 .lightbox-counter {
@@ -3021,17 +3011,12 @@ button {
   font-size: 13px;
   font-weight: 700;
   color: var(--color-honey-deep);
-  background-color: var(--color-butter);
+  background-color: rgba(255, 248, 235, 0.94);
   border: 1px solid var(--color-sandstone);
   border-radius: var(--radius-pill);
-  padding: 2px 10px;
+  padding: 5px 14px;
+  box-shadow: var(--shadow-card);
   white-space: nowrap;
-}
-
-.lightbox-caption {
-  font-size: 14px;
-  line-height: 1.4;
-  color: var(--color-umber);
 }
 
 .lightbox-close-btn,
