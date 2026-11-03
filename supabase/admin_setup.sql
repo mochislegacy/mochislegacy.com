@@ -187,6 +187,118 @@ begin
   return true;
 end $$;
 
+-- 4b. Open Event Sign-Ups (Public Gaggle Sign-Ups & Admin Management) ----------
+create table if not exists public.mochi_event_signups (
+  id          uuid primary key default gen_random_uuid(),
+  event_id    uuid not null references public.mochi_events(id) on delete cascade,
+  name        text not null,
+  email       text not null default '',
+  people      jsonb not null default '[]'::jsonb,
+  dogs        jsonb not null default '[]'::jsonb,
+  created_at  timestamptz not null default now()
+);
+alter table public.mochi_event_signups enable row level security;
+revoke all on public.mochi_event_signups from anon, authenticated;
+
+-- Public RPC: returns event signups WITHOUT email addresses for the public roster
+create or replace function public.mochi_public_event_signups()
+returns jsonb language sql security definer set search_path = public as $$
+  select coalesce(
+    jsonb_agg(
+      jsonb_build_object(
+        'id', s.id,
+        'event_id', s.event_id,
+        'name', s.name,
+        'people', coalesce(s.people, '[]'::jsonb),
+        'dogs', coalesce(s.dogs, '[]'::jsonb),
+        'created_at', s.created_at
+      )
+      order by s.created_at asc
+    ),
+    '[]'::jsonb
+  )
+  from public.mochi_event_signups s;
+$$;
+
+-- Public RPC: submits a new event signup (primary name, optional email, additional people, dogs)
+create or replace function public.mochi_submit_event_signup(
+  p_event_id uuid,
+  p_name text,
+  p_email text default '',
+  p_people jsonb default '[]'::jsonb,
+  p_dogs jsonb default '[]'::jsonb
+)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  v_id uuid;
+begin
+  if coalesce(trim(p_name), '') = '' then
+    raise exception 'Please enter your name.' using errcode = 'P0001';
+  end if;
+  insert into public.mochi_event_signups (event_id, name, email, people, dogs)
+  values (
+    p_event_id,
+    trim(p_name),
+    coalesce(lower(trim(p_email)), ''),
+    coalesce(p_people, '[]'::jsonb),
+    coalesce(p_dogs, '[]'::jsonb)
+  )
+  returning id into v_id;
+  return jsonb_build_object('id', v_id);
+end $$;
+
+-- Admin RPC: returns all event signups INCLUDING email addresses
+create or replace function public.mochi_k_event_signups(p_key text)
+returns jsonb language plpgsql security definer set search_path = public as $$
+begin
+  perform public.mochi_k_check(p_key);
+  return coalesce((
+    select jsonb_agg(
+      jsonb_build_object(
+        'id', s.id,
+        'event_id', s.event_id,
+        'name', s.name,
+        'email', s.email,
+        'people', coalesce(s.people, '[]'::jsonb),
+        'dogs', coalesce(s.dogs, '[]'::jsonb),
+        'created_at', s.created_at
+      )
+      order by s.created_at asc
+    )
+    from public.mochi_event_signups s
+  ), '[]'::jsonb);
+end $$;
+
+-- Admin RPC: updates an existing event signup
+create or replace function public.mochi_k_update_event_signup(
+  p_key text,
+  p_signup_id uuid,
+  p_name text,
+  p_email text default '',
+  p_people jsonb default '[]'::jsonb,
+  p_dogs jsonb default '[]'::jsonb
+)
+returns boolean language plpgsql security definer set search_path = public as $$
+begin
+  perform public.mochi_k_check(p_key);
+  update public.mochi_event_signups
+     set name   = trim(p_name),
+         email  = coalesce(lower(trim(p_email)), ''),
+         people = coalesce(p_people, '[]'::jsonb),
+         dogs   = coalesce(p_dogs, '[]'::jsonb)
+   where id = p_signup_id;
+  return found;
+end $$;
+
+-- Admin RPC: deletes an event signup
+create or replace function public.mochi_k_delete_event_signup(p_key text, p_signup_id uuid)
+returns boolean language plpgsql security definer set search_path = public as $$
+begin
+  perform public.mochi_k_check(p_key);
+  delete from public.mochi_event_signups where id = p_signup_id;
+  return found;
+end $$;
+
 -- 5. Key management -------------------------------------------------------------
 -- Any admin can issue a new (regular) admin key. The key is returned once.
 create or replace function public.mochi_k_create_key(p_key text, p_label text, p_email text default null)
@@ -245,6 +357,11 @@ grant execute on function public.mochi_k_delete_subscriber(text, text)          
 grant execute on function public.mochi_k_events(text)                                to anon, authenticated;
 grant execute on function public.mochi_k_add_event(text, text, text, timestamptz, timestamptz, text, integer, text) to anon, authenticated;
 grant execute on function public.mochi_k_delete_event(text, uuid)                    to anon, authenticated;
+grant execute on function public.mochi_public_event_signups()                        to anon, authenticated;
+grant execute on function public.mochi_submit_event_signup(uuid, text, text, jsonb, jsonb) to anon, authenticated;
+grant execute on function public.mochi_k_event_signups(text)                         to anon, authenticated;
+grant execute on function public.mochi_k_update_event_signup(text, uuid, text, text, jsonb, jsonb) to anon, authenticated;
+grant execute on function public.mochi_k_delete_event_signup(text, uuid)             to anon, authenticated;
 grant execute on function public.mochi_k_create_key(text, text, text)                to anon, authenticated;
 grant execute on function public.mochi_k_list_keys(text)                             to anon, authenticated;
 grant execute on function public.mochi_k_revoke_key(text, uuid, text)               to anon, authenticated;

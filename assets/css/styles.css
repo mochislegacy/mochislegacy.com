@@ -3099,3 +3099,528 @@ button {
   }
 }
 
+/* ==========================================================================
+   13. Event Gaggle Sign-Ups, Public Roster & Admin Sign-Up Controls
+   ========================================================================== */
+
+.event-attendance-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-cream-soft);
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-umber);
+  box-shadow: inset 0 0 0 1px var(--color-sandstone);
+}
+
+.event-gaggle-box {
+  margin-top: 20px;
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--color-sandstone);
+  background: linear-gradient(180deg, var(--color-cream-soft), rgba(252, 241, 214, 0.55));
+  padding: 18px;
+}
+
+@media (min-width: 640px) {
+  .event-gaggle-box {
+    padding: 20px 22px;
+  }
+}
+
+.event-gaggle-welcome {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+@media (min-width: 640px) {
+  .event-gaggle-welcome {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+  }
+}
+
+.event-gaggle-welcome-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.event-gaggle-welcome-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-espresso);
+  line-height: 1.3;
+}
+
+.event-gaggle-welcome-sub {
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--color-umber);
+}
+
+.event-signup-trigger-btn {
+  margin-top: 0;
+  flex-shrink: 0;
+  width: 100%;
+  padding-inline: 22px;
+}
+
+@media (min-width: 640px) {
+  .event-signup-trigger-btn {
+    width: auto;
+  }
+}
+
+.event-signup-form {
+  margin-top: 18px;
+  border-top: 1px dashed var(--color-sandstone);
+  padding-top: 18px;
+}
+
+.event-signup-form-header {
+  margin-bottom: 14px;
+}
+
+.event-signup-form-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-espresso);
+}
+
+.event-signup-form-hint {
+  margin-top: 3px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--color-umber);
+}
+
+.event-dynamic-rows-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.event-dynamic-rows-stack:empty {
+  margin-top: 0;
+}
+
+.event-dynamic-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-sandstone);
+  background-color: rgba(255, 255, 255, 0.92);
+}
+
+@media (min-width: 520px) {
+  .event-dynamic-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.event-dynamic-input-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+@media (min-width: 520px) {
+  .event-dynamic-input-wrap {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
+}
+
+.event-dynamic-row-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-cream-soft);
+  border: 1px solid var(--color-sandstone);
+  padding: 4px 11px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-espresso);
+  width: fit-content;
+}
+
+.event-dynamic-row-badge.is-dog {
+  background-color: var(--color-butter);
+  color: var(--color-honey-deep);
+}
+
+.event-dynamic-input-wrap .form-input {
+  margin-top: 0;
+  flex: 1;
+}
+
+.event-remove-row-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(185, 28, 28, 0.28);
+  background-color: rgba(254, 242, 242, 0.85);
+  color: #991b1b;
+  font-size: 12.5px;
+  font-weight: 600;
+  transition: background-color var(--duration-fast) var(--ease-default);
+}
+
+.event-remove-row-btn:hover {
+  background-color: #fee2e2;
+}
+
+.event-dog-disclaimer {
+  margin-top: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius-xl);
+  border: 1.5px solid #e6a83c;
+  background-color: #fff7e0;
+  color: var(--color-espresso);
+}
+
+.event-dog-disclaimer[hidden] {
+  display: none !important;
+}
+
+.event-dog-disclaimer-icon {
+  font-size: 18px;
+  line-height: 1.3;
+  flex-shrink: 0;
+}
+
+.event-dog-disclaimer-text {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--color-espresso);
+}
+
+.event-signup-add-bar {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.event-add-row-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  border: 1.5px dashed var(--color-honey-dark);
+  background-color: rgba(255, 255, 255, 0.9);
+  color: var(--color-espresso);
+  font-size: 13.5px;
+  font-weight: 700;
+  transition: background-color var(--duration-fast) var(--ease-default),
+    border-color var(--duration-fast) var(--ease-default);
+}
+
+.event-add-row-btn:hover {
+  background-color: var(--color-butter);
+  border-style: solid;
+}
+
+.event-add-row-btn.is-dog {
+  background-color: var(--color-butter);
+  color: var(--color-honey-deep);
+}
+
+.event-add-row-btn.is-dog:hover {
+  background-color: #f9e3ad;
+}
+
+.event-signup-submit-bar {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.event-submit-btn {
+  margin-top: 0;
+  width: auto;
+  padding-inline: 24px;
+}
+
+/* Public Roster ("Who's signed up") */
+.event-roster-section {
+  margin-top: 18px;
+  border-top: 1px solid rgba(214, 189, 148, 0.7);
+  padding-top: 14px;
+}
+
+.event-roster-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.event-roster-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-honey-deep);
+}
+
+.event-roster-count {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-umber);
+}
+
+.event-roster-empty {
+  font-size: 13.5px;
+  font-style: italic;
+  color: var(--color-umber);
+}
+
+.event-roster-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.event-roster-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 9px 13px;
+  border-radius: var(--radius-xl);
+  border: 1px solid rgba(214, 189, 148, 0.75);
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+.event-roster-people {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-espresso);
+}
+
+.event-roster-icon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-honey-dark);
+}
+
+.event-roster-dogs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.event-dog-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-butter);
+  border: 1px solid var(--color-sandstone);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-honey-deep);
+}
+
+/* Admin Event Sign-Ups Box */
+.admin-event-signups-box {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--color-sandstone);
+  background-color: var(--color-cream-soft);
+}
+
+.admin-event-signups-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.admin-event-signups-title-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-event-signups-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-espresso);
+}
+
+.admin-event-signups-summary {
+  border-radius: var(--radius-pill);
+  background-color: var(--color-butter);
+  border: 1px solid var(--color-sandstone);
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-honey-deep);
+}
+
+.admin-event-bcc-bar {
+  margin-top: 12px;
+}
+
+.admin-event-signups-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-empty-state-sm {
+  padding: 14px;
+  font-size: 13.5px;
+}
+
+.admin-signup-card {
+  padding: 13px 15px;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-sandstone);
+  background-color: #ffffff;
+}
+
+.admin-signup-card-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+
+.admin-signup-main-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.admin-signup-primary-name {
+  font-size: 15px;
+  color: var(--color-espresso);
+}
+
+.admin-signup-email {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-honey-deep);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.admin-signup-party-badges {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-signup-badge-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-signup-group-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-umber);
+  min-width: 68px;
+}
+
+.admin-person-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-cream-soft);
+  border: 1px solid var(--color-sandstone);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-espresso);
+}
+
+.admin-no-dogs-label {
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--color-umber);
+}
+
+.admin-signup-actions {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(214, 189, 148, 0.5);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-signup-edit-form {
+  padding: 15px;
+  border-radius: var(--radius-xl);
+  border: 1.5px solid var(--color-honey);
+  background-color: #ffffff;
+}
+
+.admin-signup-edit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.admin-signup-edit-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-espresso);
+}
+
+

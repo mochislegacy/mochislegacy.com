@@ -29,6 +29,7 @@
     localVolunteers: "mochi-local-volunteers",
     localSubscribers: "mochi-local-subscribers",
     localEvents: "mochi-local-events",
+    localEventSignups: "mochi-local-event-signups",
     deletedIds: "mochi-admin-deleted-ids",
   };
 
@@ -234,6 +235,113 @@ begin
   return true;
 end $$;
 
+-- 4b. Open Event Sign-Ups (Public Gaggle Sign-Ups & Admin Management)
+create table if not exists public.mochi_event_signups (
+  id          uuid primary key default gen_random_uuid(),
+  event_id    uuid not null references public.mochi_events(id) on delete cascade,
+  name        text not null,
+  email       text not null default '',
+  people      jsonb not null default '[]'::jsonb,
+  dogs        jsonb not null default '[]'::jsonb,
+  created_at  timestamptz not null default now()
+);
+alter table public.mochi_event_signups enable row level security;
+revoke all on public.mochi_event_signups from anon, authenticated;
+
+create or replace function public.mochi_public_event_signups()
+returns jsonb language sql security definer set search_path = public as $$
+  select coalesce(
+    jsonb_agg(
+      jsonb_build_object(
+        'id', s.id,
+        'event_id', s.event_id,
+        'name', s.name,
+        'people', coalesce(s.people, '[]'::jsonb),
+        'dogs', coalesce(s.dogs, '[]'::jsonb),
+        'created_at', s.created_at
+      )
+      order by s.created_at asc
+    ),
+    '[]'::jsonb
+  )
+  from public.mochi_event_signups s;
+$$;
+
+create or replace function public.mochi_submit_event_signup(
+  p_event_id uuid,
+  p_name text,
+  p_email text default '',
+  p_people jsonb default '[]'::jsonb,
+  p_dogs jsonb default '[]'::jsonb
+)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  v_id uuid;
+begin
+  if coalesce(trim(p_name), '') = '' then
+    raise exception 'Please enter your name.' using errcode = 'P0001';
+  end if;
+  insert into public.mochi_event_signups (event_id, name, email, people, dogs)
+  values (
+    p_event_id,
+    trim(p_name),
+    coalesce(lower(trim(p_email)), ''),
+    coalesce(p_people, '[]'::jsonb),
+    coalesce(p_dogs, '[]'::jsonb)
+  )
+  returning id into v_id;
+  return jsonb_build_object('id', v_id);
+end $$;
+
+create or replace function public.mochi_k_event_signups(p_key text)
+returns jsonb language plpgsql security definer set search_path = public as $$
+begin
+  perform public.mochi_k_check(p_key);
+  return coalesce((
+    select jsonb_agg(
+      jsonb_build_object(
+        'id', s.id,
+        'event_id', s.event_id,
+        'name', s.name,
+        'email', s.email,
+        'people', coalesce(s.people, '[]'::jsonb),
+        'dogs', coalesce(s.dogs, '[]'::jsonb),
+        'created_at', s.created_at
+      )
+      order by s.created_at asc
+    )
+    from public.mochi_event_signups s
+  ), '[]'::jsonb);
+end $$;
+
+create or replace function public.mochi_k_update_event_signup(
+  p_key text,
+  p_signup_id uuid,
+  p_name text,
+  p_email text default '',
+  p_people jsonb default '[]'::jsonb,
+  p_dogs jsonb default '[]'::jsonb
+)
+returns boolean language plpgsql security definer set search_path = public as $$
+begin
+  perform public.mochi_k_check(p_key);
+  update public.mochi_event_signups
+     set name   = trim(p_name),
+         email  = coalesce(lower(trim(p_email)), ''),
+         people = coalesce(p_people, '[]'::jsonb),
+         dogs   = coalesce(p_dogs, '[]'::jsonb)
+   where id = p_signup_id;
+  return found;
+end $$;
+
+create or replace function public.mochi_k_delete_event_signup(p_key text, p_signup_id uuid)
+returns boolean language plpgsql security definer set search_path = public as $$
+begin
+  perform public.mochi_k_check(p_key);
+  delete from public.mochi_event_signups where id = p_signup_id;
+  return found;
+end $$;
+
 -- 5. Key management
 create or replace function public.mochi_k_create_key(p_key text, p_label text, p_email text default null)
 returns jsonb language plpgsql security definer set search_path = public as $$
@@ -289,6 +397,11 @@ grant execute on function public.mochi_k_delete_subscriber(text, text)          
 grant execute on function public.mochi_k_events(text)                                to anon, authenticated;
 grant execute on function public.mochi_k_add_event(text, text, text, timestamptz, timestamptz, text, integer, text) to anon, authenticated;
 grant execute on function public.mochi_k_delete_event(text, uuid)                    to anon, authenticated;
+grant execute on function public.mochi_public_event_signups()                        to anon, authenticated;
+grant execute on function public.mochi_submit_event_signup(uuid, text, text, jsonb, jsonb) to anon, authenticated;
+grant execute on function public.mochi_k_event_signups(text)                         to anon, authenticated;
+grant execute on function public.mochi_k_update_event_signup(text, uuid, text, text, jsonb, jsonb) to anon, authenticated;
+grant execute on function public.mochi_k_delete_event_signup(text, uuid)             to anon, authenticated;
 grant execute on function public.mochi_k_create_key(text, text, text)                to anon, authenticated;
 grant execute on function public.mochi_k_list_keys(text)                             to anon, authenticated;
 grant execute on function public.mochi_k_revoke_key(text, uuid, text)               to anon, authenticated;
@@ -1025,7 +1138,117 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
     );
   }
 
-  function renderPublicEvents(upcomingEvents) {
+  const openEventSignupForms = new Set();
+
+  function normalizeEventSignup(raw) {
+    if (!raw || !raw.id || !raw.event_id) return null;
+    const people = Array.isArray(raw.people)
+      ? raw.people.map((p) => String(p || "").trim()).filter(Boolean)
+      : [];
+    const dogs = Array.isArray(raw.dogs)
+      ? raw.dogs.map((d) => String(d || "").trim()).filter(Boolean)
+      : [];
+    return {
+      id: String(raw.id),
+      event_id: String(raw.event_id),
+      name: String(raw.name || "").trim(),
+      email: String(raw.email || "").trim().toLowerCase(),
+      people,
+      dogs,
+      created_at: raw.created_at || null,
+    };
+  }
+
+  async function fetchPublicEventSignups() {
+    const rpcRes = await callSupabaseRpc("mochi_public_event_signups", {});
+    const remoteRaw =
+      rpcRes.ok && Array.isArray(rpcRes.data) ? rpcRes.data : [];
+    const localRaw = readJsonStorage(STORAGE_KEYS.localEventSignups, []);
+    const deletedIds = getDeletedIdsSet();
+
+    const map = new Map();
+    [...remoteRaw, ...localRaw].forEach((item) => {
+      const norm = normalizeEventSignup(item);
+      if (!norm) return;
+      if (deletedIds.has(`signup:${norm.id}`) || deletedIds.has(norm.id)) {
+        return;
+      }
+      const existing = map.get(norm.id);
+      map.set(norm.id, {
+        ...existing,
+        ...norm,
+        email: norm.email || existing?.email || "",
+      });
+    });
+
+    return Array.from(map.values()).sort((a, b) =>
+      String(a.created_at || "").localeCompare(String(b.created_at || ""))
+    );
+  }
+
+  function buildDynamicSignupRowHtml(rowType, value = "") {
+    if (rowType === "person") {
+      return `
+        <div class="event-dynamic-row" data-signup-row="person">
+          <div class="event-dynamic-input-wrap">
+            <span class="event-dynamic-row-badge">Additional Person</span>
+            <input
+              type="text"
+              name="extraPerson"
+              maxlength="80"
+              value="${escapeHtml(value)}"
+              placeholder="Name"
+              required
+              class="form-input"
+            />
+          </div>
+          <button
+            type="button"
+            data-remove-signup-row="person"
+            aria-label="Remove person"
+            class="event-remove-row-btn"
+          >
+            Remove
+          </button>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="event-dynamic-row" data-signup-row="dog">
+        <div class="event-dynamic-input-wrap">
+          <span class="event-dynamic-row-badge is-dog">🐾 Dog</span>
+          <input
+            type="text"
+            name="dogName"
+            maxlength="60"
+            value="${escapeHtml(value)}"
+            placeholder="Dog's Name"
+            required
+            class="form-input"
+          />
+        </div>
+        <button
+          type="button"
+          data-remove-signup-row="dog"
+          aria-label="Remove dog"
+          class="event-remove-row-btn"
+        >
+          Remove
+        </button>
+      </div>
+    `;
+  }
+
+  function syncFormDogDisclaimer(formEl) {
+    if (!formEl) return;
+    const disclaimer = formEl.querySelector("[data-dog-disclaimer]");
+    if (!disclaimer) return;
+    const dogRows = formEl.querySelectorAll('[data-signup-row="dog"]');
+    disclaimer.hidden = dogRows.length === 0;
+  }
+
+  function renderPublicEvents(upcomingEvents, publicSignups = []) {
     // 1. Render Home Page Ticket(s)
     if (homeTicketsList) {
       const emptyTicket = homeTicketsList.querySelector(
@@ -1056,7 +1279,7 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
             <div class="landing-ticket-stub">
               <a href="#events" data-nav="events" class="landing-event-link">
                 Event sign-ups
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true">
                   <path d="M5 12h14"></path>
                   <path d="m12 5 7 7-7 7"></path>
                 </svg>
@@ -1080,17 +1303,76 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
       if (upcomingEvents.length > 0) {
         if (eventsEmptyCard) eventsEmptyCard.hidden = true;
         upcomingEvents.forEach((ev) => {
+          const eventIdStr = String(ev.id);
+          const eventSignups = publicSignups.filter(
+            (s) => String(s.event_id) === eventIdStr
+          );
+
+          let totalPeople = 0;
+          let totalDogs = 0;
+          eventSignups.forEach((s) => {
+            totalPeople += 1 + (Array.isArray(s.people) ? s.people.length : 0);
+            totalDogs += Array.isArray(s.dogs) ? s.dogs.length : 0;
+          });
+
           const badge = formatEventBadge(ev.starts_at);
           const windowStr = formatEventWindow(ev.starts_at, ev.ends_at, true);
           const cap = Number(ev.cap) || 15;
-          const confirmed = Number(ev.confirmed) || 0;
-          const spotsOpen = Math.max(0, cap - confirmed);
+          const confirmedDogs = Math.max(Number(ev.confirmed) || 0, totalDogs);
+          const spotsOpen = Math.max(0, cap - confirmedDogs);
           const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
             `${ev.meeting_spot || ""} Boulder CO`
           )}`;
+          const isFormOpen = openEventSignupForms.has(eventIdStr);
+
+          const rosterListHtml =
+            eventSignups.length === 0
+              ? `<p class="event-roster-empty">No one has signed up yet — be the first to join this walk!</p>`
+              : `<ul class="event-roster-list" aria-label="People and dogs signed up for this event">
+                  ${eventSignups
+                    .map((s) => {
+                      const allPeople = [s.name, ...(s.people || [])].filter(
+                        Boolean
+                      );
+                      const allDogs = (s.dogs || []).filter(Boolean);
+                      return `
+                        <li class="event-roster-item">
+                          <div class="event-roster-people">
+                            <span class="event-roster-icon" aria-hidden="true">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                              </svg>
+                            </span>
+                            <span class="event-roster-names">${escapeHtml(
+                              allPeople.join(", ")
+                            )}</span>
+                          </div>
+                          ${
+                            allDogs.length > 0
+                              ? `<div class="event-roster-dogs">
+                                  ${allDogs
+                                    .map(
+                                      (dogName) =>
+                                        `<span class="event-dog-chip">🐾 ${escapeHtml(
+                                          dogName
+                                        )}</span>`
+                                    )
+                                    .join("")}
+                                </div>`
+                              : ""
+                          }
+                        </li>
+                      `;
+                    })
+                    .join("")}
+                </ul>`;
 
           const article = document.createElement("article");
           article.className = "event-card";
+          article.dataset.eventId = eventIdStr;
           article.innerHTML = `
             <div class="event-card-header">
               <div class="event-date-badge" aria-hidden="true">
@@ -1107,7 +1389,10 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
               <span class="event-kind-pill">${escapeHtml(ev.kind || "Gaggle walk")}</span>
               <span class="event-spots-pill">
                 <span class="event-spots-dot" aria-hidden="true"></span>
-                ${spotsOpen} of ${cap} spots open
+                ${spotsOpen} of ${cap} dog spots open
+              </span>
+              <span class="event-attendance-pill">
+                ${totalPeople} ${totalPeople === 1 ? "person" : "people"} · ${totalDogs} ${totalDogs === 1 ? "dog" : "dogs"} signed up
               </span>
             </div>
             <p class="event-card-spot">
@@ -1121,6 +1406,121 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
                 ? `<p class="event-card-notes">${escapeHtml(ev.notes)}</p>`
                 : ""
             }
+
+            <div class="event-gaggle-box">
+              <div class="event-gaggle-welcome">
+                <div class="event-gaggle-welcome-text">
+                  <h4 class="event-gaggle-welcome-title">
+                    Come walk with us — everyone is welcome!
+                  </h4>
+                  <p class="event-gaggle-welcome-sub">
+                    Bring your Golden, bring friends &amp; family, or come solo just to enjoy the dogs. Sign up below so we know who’s joining!
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  data-toggle-event-signup="${escapeHtml(eventIdStr)}"
+                  aria-expanded="${isFormOpen ? "true" : "false"}"
+                  class="btn-ember-pill event-signup-trigger-btn"
+                >
+                  ${isFormOpen ? "Close sign-up form" : "Sign up for this walk"}
+                </button>
+              </div>
+
+              <form
+                class="event-signup-form"
+                data-event-signup-form="${escapeHtml(eventIdStr)}"
+                ${isFormOpen ? "" : "hidden"}
+                novalidate
+              >
+                <div class="event-signup-form-header">
+                  <h5 class="event-signup-form-title">
+                    Sign up for ${escapeHtml(ev.title)}
+                  </h5>
+                  <p class="event-signup-form-hint">
+                    Enter your name below, then use the buttons at the bottom to add anyone else or any dogs coming with you.
+                  </p>
+                </div>
+
+                <div class="form-grid sm-2col">
+                  <label>
+                    <span class="form-label">Your name *</span>
+                    <input
+                      type="text"
+                      name="primaryName"
+                      required
+                      maxlength="80"
+                      class="form-input"
+                    />
+                  </label>
+                  <label>
+                    <span class="form-label">Your email <span class="form-label-optional">(optional)</span></span>
+                    <input
+                      type="email"
+                      name="email"
+                      maxlength="120"
+                      class="form-input"
+                    />
+                  </label>
+                </div>
+
+                <div class="event-dynamic-rows-stack" data-extra-people-list></div>
+                <div class="event-dynamic-rows-stack" data-extra-dogs-list></div>
+
+                <div class="event-dog-disclaimer" data-dog-disclaimer hidden role="note">
+                  <span class="event-dog-disclaimer-icon" aria-hidden="true">🐾</span>
+                  <p class="event-dog-disclaimer-text">
+                    <strong>Note for dog owners:</strong> We request that all dogs brought to a Gaggle are comfortable around other dogs and groups of people. If your dog is not kind to others, you will kindly be asked to separate from the walking group.
+                  </p>
+                </div>
+
+                <div class="event-signup-add-bar">
+                  <button
+                    type="button"
+                    data-add-person-row="true"
+                    class="event-add-row-btn"
+                  >
+                    + Add a person
+                  </button>
+                  <button
+                    type="button"
+                    data-add-dog-row="true"
+                    class="event-add-row-btn is-dog"
+                  >
+                    🐾 + Add a dog
+                  </button>
+                </div>
+
+                <p class="admin-alert-error" data-signup-error hidden role="alert"></p>
+
+                <div class="event-signup-submit-bar">
+                  <button type="submit" class="btn-ember-pill event-submit-btn">
+                    Complete Sign-Up
+                  </button>
+                  <button
+                    type="button"
+                    data-cancel-event-signup="${escapeHtml(eventIdStr)}"
+                    class="admin-btn-secondary"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+
+              <div class="event-roster-section">
+                <div class="event-roster-header">
+                  <h5 class="event-roster-title">Who’s signed up</h5>
+                  <span class="event-roster-count">
+                    ${totalPeople} ${totalPeople === 1 ? "person" : "people"}${
+            totalDogs > 0
+              ? ` · ${totalDogs} ${totalDogs === 1 ? "dog" : "dogs"}`
+              : ""
+          }
+                  </span>
+                </div>
+                ${rosterListHtml}
+              </div>
+            </div>
           `;
           eventsListContainer.appendChild(article);
         });
@@ -1130,9 +1530,221 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
     }
   }
 
+  if (eventsListContainer) {
+    eventsListContainer.addEventListener("click", (event) => {
+      // 1. Toggle sign-up form open/closed
+      const toggleBtn = event.target.closest("[data-toggle-event-signup]");
+      if (toggleBtn) {
+        const eventId = toggleBtn.dataset.toggleEventSignup;
+        const card = toggleBtn.closest(".event-card");
+        const form = card
+          ? card.querySelector(`[data-event-signup-form="${CSS.escape(eventId)}"]`)
+          : null;
+        if (!form) return;
+        const willOpen = form.hidden;
+        form.hidden = !willOpen;
+        toggleBtn.setAttribute("aria-expanded", willOpen ? "true" : "false");
+        toggleBtn.textContent = willOpen
+          ? "Close sign-up form"
+          : "Sign up for this walk";
+        if (willOpen) {
+          openEventSignupForms.add(String(eventId));
+          const firstInput = form.querySelector('input[name="primaryName"]');
+          if (firstInput) firstInput.focus();
+        } else {
+          openEventSignupForms.delete(String(eventId));
+        }
+        return;
+      }
+
+      // 2. Cancel sign-up form
+      const cancelBtn = event.target.closest("[data-cancel-event-signup]");
+      if (cancelBtn) {
+        const eventId = cancelBtn.dataset.cancelEventSignup;
+        const form = cancelBtn.closest("[data-event-signup-form]");
+        const card = cancelBtn.closest(".event-card");
+        if (form) {
+          form.reset();
+          const peopleList = form.querySelector("[data-extra-people-list]");
+          const dogsList = form.querySelector("[data-extra-dogs-list]");
+          if (peopleList) peopleList.innerHTML = "";
+          if (dogsList) dogsList.innerHTML = "";
+          syncFormDogDisclaimer(form);
+          const errEl = form.querySelector("[data-signup-error]");
+          if (errEl) errEl.hidden = true;
+          form.hidden = true;
+        }
+        openEventSignupForms.delete(String(eventId));
+        const triggerBtn = card
+          ? card.querySelector("[data-toggle-event-signup]")
+          : null;
+        if (triggerBtn) {
+          triggerBtn.setAttribute("aria-expanded", "false");
+          triggerBtn.textContent = "Sign up for this walk";
+        }
+        return;
+      }
+
+      // 3. Add a person row
+      const addPersonBtn = event.target.closest("[data-add-person-row]");
+      if (addPersonBtn) {
+        const form = addPersonBtn.closest("form");
+        const container = form
+          ? form.querySelector("[data-extra-people-list]")
+          : null;
+        if (container) {
+          container.insertAdjacentHTML(
+            "beforeend",
+            buildDynamicSignupRowHtml("person")
+          );
+          const inputs = container.querySelectorAll(
+            'input[name="extraPerson"]'
+          );
+          const lastInput = inputs[inputs.length - 1];
+          if (lastInput) lastInput.focus();
+        }
+        return;
+      }
+
+      // 4. Add a dog row
+      const addDogBtn = event.target.closest("[data-add-dog-row]");
+      if (addDogBtn) {
+        const form = addDogBtn.closest("form");
+        const container = form
+          ? form.querySelector("[data-extra-dogs-list]")
+          : null;
+        if (container && form) {
+          container.insertAdjacentHTML(
+            "beforeend",
+            buildDynamicSignupRowHtml("dog")
+          );
+          syncFormDogDisclaimer(form);
+          const inputs = container.querySelectorAll('input[name="dogName"]');
+          const lastInput = inputs[inputs.length - 1];
+          if (lastInput) lastInput.focus();
+        }
+        return;
+      }
+
+      // 5. Remove a person or dog row
+      const removeRowBtn = event.target.closest("[data-remove-signup-row]");
+      if (removeRowBtn) {
+        const form = removeRowBtn.closest("form");
+        const row = removeRowBtn.closest("[data-signup-row]");
+        if (row) row.remove();
+        if (form) syncFormDogDisclaimer(form);
+      }
+    });
+
+    eventsListContainer.addEventListener("submit", async (event) => {
+      const form = event.target.closest("[data-event-signup-form]");
+      if (!form) return;
+      event.preventDefault();
+
+      const eventId = form.dataset.eventSignupForm;
+      const errEl = form.querySelector("[data-signup-error]");
+      if (errEl) errEl.hidden = true;
+
+      const primaryNameInput = form.querySelector('input[name="primaryName"]');
+      const emailInput = form.querySelector('input[name="email"]');
+      const primaryName = String(primaryNameInput?.value || "").trim();
+      const email = String(emailInput?.value || "").trim().toLowerCase();
+
+      const extraPeopleInputs = Array.from(
+        form.querySelectorAll('input[name="extraPerson"]')
+      );
+      const dogInputs = Array.from(
+        form.querySelectorAll('input[name="dogName"]')
+      );
+
+      const extraPeople = extraPeopleInputs
+        .map((inp) => String(inp.value || "").trim())
+        .filter(Boolean);
+      const dogs = dogInputs
+        .map((inp) => String(inp.value || "").trim())
+        .filter(Boolean);
+
+      if (!primaryName) {
+        if (errEl) {
+          errEl.textContent = "Please enter your name.";
+          errEl.hidden = false;
+        }
+        return;
+      }
+
+      if (email && !email.includes("@")) {
+        if (errEl) {
+          errEl.textContent =
+            "Please enter a valid email address (or leave it blank).";
+          errEl.hidden = false;
+        }
+        return;
+      }
+
+      if (extraPeople.length !== extraPeopleInputs.length) {
+        if (errEl) {
+          errEl.textContent =
+            "Please fill in the name for each added person (or remove blank rows).";
+          errEl.hidden = false;
+        }
+        return;
+      }
+
+      if (dogs.length !== dogInputs.length) {
+        if (errEl) {
+          errEl.textContent =
+            "Please fill in the name for each added dog (or remove blank rows).";
+          errEl.hidden = false;
+        }
+        return;
+      }
+
+      const submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Signing up…";
+      }
+
+      const rpcRes = await callSupabaseRpc("mochi_submit_event_signup", {
+        p_event_id: eventId,
+        p_name: primaryName,
+        p_email: email,
+        p_people: extraPeople,
+        p_dogs: dogs,
+      });
+
+      const newId =
+        rpcRes.ok && rpcRes.data && rpcRes.data.id
+          ? String(rpcRes.data.id)
+          : `signup-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
+      const localSignups = readJsonStorage(STORAGE_KEYS.localEventSignups, []);
+      localSignups.push({
+        id: newId,
+        event_id: String(eventId),
+        name: primaryName,
+        email,
+        people: extraPeople,
+        dogs,
+        created_at: new Date().toISOString(),
+      });
+      writeJsonStorage(STORAGE_KEYS.localEventSignups, localSignups);
+
+      openEventSignupForms.delete(String(eventId));
+      await refreshPublicEvents();
+      if (adminState.activeKey) {
+        await loadAllAdminData();
+      }
+      showAdminToast("You're signed up! See you at the walk.");
+    });
+  }
+
   async function refreshPublicEvents() {
-    const upcoming = await fetchPublicUpcomingEvents();
-    renderPublicEvents(upcoming);
+    const [upcoming, publicSignups] = await Promise.all([
+      fetchPublicUpcomingEvents(),
+      fetchPublicEventSignups(),
+    ]);
+    renderPublicEvents(upcoming, publicSignups);
   }
 
   refreshPublicEvents();
@@ -1496,11 +2108,13 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
     isSuperAdmin: false,
     activeTab: "submissions",
     submissionFilter: "all",
-    confirmTarget: null, // { type: 'dog'|'volunteer'|'event'|'subscriber'|'key', id: string }
+    confirmTarget: null, // { type: 'dog'|'volunteer'|'event'|'event_signup'|'subscriber'|'key', id: string }
+    editingSignupId: null,
     dogs: [],
     volunteers: [],
     subscribers: [],
     events: [],
+    eventSignups: [],
     keys: [],
     supabaseNeedsSetup: false,
   };
@@ -1979,6 +2593,41 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
       String(a.starts_at || "").localeCompare(String(b.starts_at || ""))
     );
 
+    // 2b. Fetch Event Sign-Ups (with email addresses for Admin)
+    const [adminSignupsRes, publicSignupsRes] = await Promise.all([
+      callSupabaseRpc("mochi_k_event_signups", { p_key: token }),
+      callSupabaseRpc("mochi_public_event_signups", {}),
+    ]);
+    const remoteAdminSignups =
+      adminSignupsRes.ok && Array.isArray(adminSignupsRes.data)
+        ? adminSignupsRes.data
+        : [];
+    const remotePublicSignups =
+      publicSignupsRes.ok && Array.isArray(publicSignupsRes.data)
+        ? publicSignupsRes.data
+        : [];
+    const localSignups = readJsonStorage(STORAGE_KEYS.localEventSignups, []);
+
+    const signupsMap = new Map();
+    [...remotePublicSignups, ...remoteAdminSignups, ...localSignups].forEach(
+      (raw) => {
+        const norm = normalizeEventSignup(raw);
+        if (!norm) return;
+        if (deletedIds.has(`signup:${norm.id}`) || deletedIds.has(norm.id)) {
+          return;
+        }
+        const existing = signupsMap.get(norm.id);
+        signupsMap.set(norm.id, {
+          ...existing,
+          ...norm,
+          email: norm.email || existing?.email || "",
+        });
+      }
+    );
+    adminState.eventSignups = Array.from(signupsMap.values()).sort((a, b) =>
+      String(a.created_at || "").localeCompare(String(b.created_at || ""))
+    );
+
     // 3. Fetch Issued Admin Keys (if Super Admin)
     const localKeys = getAllLocalKnownKeys();
     const keysMap = new Map();
@@ -2239,7 +2888,182 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
     }
   }
 
-  // 2. Render Events Panel
+  // 2. Render Events Panel (Events + Gaggle Sign-Ups Management + BCC Emails)
+  function renderAdminSignupCardHtml(signup) {
+    const isEditing =
+      adminState.editingSignupId &&
+      String(adminState.editingSignupId) === String(signup.id);
+
+    if (isEditing) {
+      const extraPeopleRows = (signup.people || [])
+        .map((p) => buildDynamicSignupRowHtml("person", p))
+        .join("");
+      const dogRows = (signup.dogs || [])
+        .map((d) => buildDynamicSignupRowHtml("dog", d))
+        .join("");
+
+      return `
+        <form
+          class="admin-signup-edit-form"
+          data-admin-signup-edit-form="${escapeHtml(signup.id)}"
+          data-event-id="${escapeHtml(signup.event_id)}"
+          novalidate
+        >
+          <div class="admin-signup-edit-header">
+            <h6 class="admin-signup-edit-title">Edit Sign-Up</h6>
+            <button
+              type="button"
+              data-cancel-edit-signup="${escapeHtml(signup.id)}"
+              class="admin-btn-secondary admin-btn-sm"
+            >
+              Cancel
+            </button>
+          </div>
+
+          <div class="form-grid sm-2col">
+            <label>
+              <span class="form-label">Primary Person Name *</span>
+              <input
+                type="text"
+                name="primaryName"
+                required
+                maxlength="80"
+                value="${escapeHtml(signup.name)}"
+                class="form-input"
+              />
+            </label>
+            <label>
+              <span class="form-label">Email Address <span class="form-label-optional">(optional)</span></span>
+              <input
+                type="email"
+                name="email"
+                maxlength="120"
+                value="${escapeHtml(signup.email || "")}"
+                class="form-input"
+              />
+            </label>
+          </div>
+
+          <div class="event-dynamic-rows-stack" data-extra-people-list>
+            ${extraPeopleRows}
+          </div>
+          <div class="event-dynamic-rows-stack" data-extra-dogs-list>
+            ${dogRows}
+          </div>
+
+          <div class="event-signup-add-bar">
+            <button
+              type="button"
+              data-admin-add-person-row="true"
+              class="event-add-row-btn"
+            >
+              + Add a person
+            </button>
+            <button
+              type="button"
+              data-admin-add-dog-row="true"
+              class="event-add-row-btn is-dog"
+            >
+              🐾 + Add a dog
+            </button>
+          </div>
+
+          <p class="admin-alert-error" data-admin-edit-error hidden role="alert"></p>
+
+          <div class="admin-form-actions">
+            <button type="submit" class="admin-btn-primary admin-btn-sm">
+              Save Changes
+            </button>
+            <button
+              type="button"
+              data-cancel-edit-signup="${escapeHtml(signup.id)}"
+              class="admin-btn-secondary admin-btn-sm"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      `;
+    }
+
+    const allPeople = [signup.name, ...(signup.people || [])].filter(Boolean);
+    const allDogs = (signup.dogs || []).filter(Boolean);
+    const submittedAt = formatSubmittedDate(signup.created_at);
+
+    return `
+      <div class="admin-signup-card">
+        <div class="admin-signup-card-top">
+          <div class="admin-signup-main-info">
+            <strong class="admin-signup-primary-name">${escapeHtml(
+              signup.name
+            )}</strong>
+            ${
+              signup.email
+                ? `<a href="mailto:${escapeHtml(
+                    signup.email
+                  )}" class="admin-signup-email">${escapeHtml(signup.email)}</a>`
+                : `<span class="admin-item-time">(No email provided)</span>`
+            }
+          </div>
+          ${
+            submittedAt
+              ? `<time class="admin-item-time">${escapeHtml(submittedAt)}</time>`
+              : ""
+          }
+        </div>
+
+        <div class="admin-signup-party-badges">
+          <div class="admin-signup-badge-group">
+            <span class="admin-signup-group-label">People (${
+              allPeople.length
+            }):</span>
+            ${allPeople
+              .map(
+                (personName) =>
+                  `<span class="admin-person-chip">${escapeHtml(
+                    personName
+                  )}</span>`
+              )
+              .join("")}
+          </div>
+          <div class="admin-signup-badge-group">
+            <span class="admin-signup-group-label">Dogs (${
+              allDogs.length
+            }):</span>
+            ${
+              allDogs.length > 0
+                ? allDogs
+                    .map(
+                      (dogName) =>
+                        `<span class="event-dog-chip">🐾 ${escapeHtml(
+                          dogName
+                        )}</span>`
+                    )
+                    .join("")
+                : `<span class="admin-no-dogs-label">None</span>`
+            }
+          </div>
+        </div>
+
+        <div class="admin-signup-actions">
+          <button
+            type="button"
+            data-start-edit-signup="${escapeHtml(signup.id)}"
+            class="admin-btn-secondary admin-btn-sm"
+          >
+            Edit Sign-Up
+          </button>
+          ${renderConfirmOrActionHtml(
+            "event_signup",
+            signup.id,
+            `${signup.name}'s party`,
+            "Remove from Gaggle"
+          )}
+        </div>
+      </div>
+    `;
+  }
+
   function renderEventsPanel() {
     const events = adminState.events;
     const badgeEvents = document.getElementById("admin-badge-events");
@@ -2261,8 +3085,30 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
 
     eventsListEl.innerHTML = events
       .map((ev) => {
+        const eventIdStr = String(ev.id);
+        const eventSignups = (adminState.eventSignups || []).filter(
+          (s) => String(s.event_id) === eventIdStr
+        );
+        let totalPeople = 0;
+        let totalDogs = 0;
+        eventSignups.forEach((s) => {
+          totalPeople += 1 + (Array.isArray(s.people) ? s.people.length : 0);
+          totalDogs += Array.isArray(s.dogs) ? s.dogs.length : 0;
+        });
+
+        const uniqueEmails = Array.from(
+          new Set(
+            eventSignups
+              .map((s) => String(s.email || "").trim().toLowerCase())
+              .filter(Boolean)
+          )
+        );
+        const bccString = uniqueEmails.join(", ");
+
         const windowStr = formatEventWindow(ev.starts_at, ev.ends_at, true);
         const isPast = Date.parse(ev.ends_at || ev.starts_at) < Date.now();
+        const cap = Number(ev.cap) || 15;
+
         return `
           <article class="admin-item-card">
             <div class="admin-item-top">
@@ -2278,13 +3124,68 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
               <strong>${escapeHtml(windowStr)}</strong> (Mountain Time)
             </p>
             <p class="admin-item-meta">
-              Location: ${escapeHtml(ev.meeting_spot)} · Capacity: ${Number(ev.cap) || 15} dogs
+              Location: ${escapeHtml(ev.meeting_spot)} · Dog Capacity: ${totalDogs} / ${cap} dogs · ${totalPeople} ${
+          totalPeople === 1 ? "person" : "people"
+        } attending
             </p>
             ${
               ev.notes
                 ? `<blockquote class="admin-item-notes">${escapeHtml(ev.notes)}</blockquote>`
                 : ""
             }
+
+            <div class="admin-event-signups-box">
+              <div class="admin-event-signups-header">
+                <div class="admin-event-signups-title-wrap">
+                  <h5 class="admin-event-signups-title">
+                    Gaggle Sign-Ups (${eventSignups.length})
+                  </h5>
+                  <span class="admin-event-signups-summary">
+                    ${totalPeople} ${
+          totalPeople === 1 ? "person" : "people"
+        } · ${totalDogs} ${totalDogs === 1 ? "dog" : "dogs"}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  data-copy-text="${escapeHtml(bccString)}"
+                  data-copy-label="Copied ${uniqueEmails.length} sign-up ${
+          uniqueEmails.length === 1 ? "email" : "emails"
+        } for BCC!"
+                  class="admin-btn-primary admin-btn-sm"
+                  ${uniqueEmails.length === 0 ? "disabled" : ""}
+                >
+                  Copy Sign-Up Emails for BCC (${uniqueEmails.length})
+                </button>
+              </div>
+
+              ${
+                uniqueEmails.length > 0
+                  ? `<div class="admin-event-bcc-bar">
+                      <label class="form-label">
+                        BCC emails for this event (${uniqueEmails.length}):
+                      </label>
+                      <input
+                        type="text"
+                        readonly
+                        value="${escapeHtml(bccString)}"
+                        class="form-input admin-mono-input"
+                      />
+                    </div>`
+                  : ""
+              }
+
+              <div class="admin-event-signups-list">
+                ${
+                  eventSignups.length === 0
+                    ? `<p class="admin-empty-state admin-empty-state-sm">No sign-ups for this event yet.</p>`
+                    : eventSignups
+                        .map((s) => renderAdminSignupCardHtml(s))
+                        .join("")
+                }
+              </div>
+            </div>
+
             <div class="admin-item-footer">
               ${renderConfirmOrActionHtml(
                 "event",
@@ -2447,6 +3348,12 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
   const viewAdminSection = document.getElementById("view-admin");
   if (viewAdminSection) {
     viewAdminSection.addEventListener("click", async (event) => {
+      // Auto-select readonly BCC inputs when clicked
+      const monoInput = event.target.closest("input.admin-mono-input[readonly]");
+      if (monoInput) {
+        monoInput.select();
+      }
+
       // A. Copy text button
       const copyBtn = event.target.closest("[data-copy-text]");
       if (copyBtn) {
@@ -2454,6 +3361,77 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
         const label = copyBtn.dataset.copyLabel || "Copied to clipboard!";
         const ok = await copyTextToClipboard(text);
         showAdminToast(ok ? label : "Couldn't copy automatically.");
+        return;
+      }
+
+      // A1. Start editing an event sign-up
+      const startEditSignupBtn = event.target.closest(
+        "[data-start-edit-signup]"
+      );
+      if (startEditSignupBtn) {
+        adminState.editingSignupId = startEditSignupBtn.dataset.startEditSignup;
+        adminState.confirmTarget = null;
+        renderEventsPanel();
+        return;
+      }
+
+      // A2. Cancel editing an event sign-up
+      const cancelEditSignupBtn = event.target.closest(
+        "[data-cancel-edit-signup]"
+      );
+      if (cancelEditSignupBtn) {
+        adminState.editingSignupId = null;
+        renderEventsPanel();
+        return;
+      }
+
+      // A3. Add a person row inside admin edit form
+      const adminAddPersonBtn = event.target.closest(
+        "[data-admin-add-person-row]"
+      );
+      if (adminAddPersonBtn) {
+        const form = adminAddPersonBtn.closest("form");
+        const container = form
+          ? form.querySelector("[data-extra-people-list]")
+          : null;
+        if (container) {
+          container.insertAdjacentHTML(
+            "beforeend",
+            buildDynamicSignupRowHtml("person")
+          );
+          const inputs = container.querySelectorAll(
+            'input[name="extraPerson"]'
+          );
+          const lastInput = inputs[inputs.length - 1];
+          if (lastInput) lastInput.focus();
+        }
+        return;
+      }
+
+      // A4. Add a dog row inside admin edit form
+      const adminAddDogBtn = event.target.closest("[data-admin-add-dog-row]");
+      if (adminAddDogBtn) {
+        const form = adminAddDogBtn.closest("form");
+        const container = form
+          ? form.querySelector("[data-extra-dogs-list]")
+          : null;
+        if (container) {
+          container.insertAdjacentHTML(
+            "beforeend",
+            buildDynamicSignupRowHtml("dog")
+          );
+          const inputs = container.querySelectorAll('input[name="dogName"]');
+          const lastInput = inputs[inputs.length - 1];
+          if (lastInput) lastInput.focus();
+        }
+        return;
+      }
+
+      // A5. Remove a person or dog row inside admin edit form
+      const removeRowBtn = event.target.closest("[data-remove-signup-row]");
+      if (removeRowBtn) {
+        const row = removeRowBtn.closest("[data-signup-row]");
+        if (row) row.remove();
         return;
       }
 
@@ -2485,11 +3463,132 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
         await handleConfirmedAdminAction(type, id);
       }
     });
+
+    viewAdminSection.addEventListener("submit", async (event) => {
+      const editForm = event.target.closest("[data-admin-signup-edit-form]");
+      if (!editForm) return;
+      event.preventDefault();
+
+      const signupId = editForm.dataset.adminSignupEditForm;
+      const errEl = editForm.querySelector("[data-admin-edit-error]");
+      if (errEl) errEl.hidden = true;
+
+      const primaryName = String(
+        editForm.querySelector('input[name="primaryName"]')?.value || ""
+      ).trim();
+      const email = String(
+        editForm.querySelector('input[name="email"]')?.value || ""
+      )
+        .trim()
+        .toLowerCase();
+
+      const extraPeopleInputs = Array.from(
+        editForm.querySelectorAll('input[name="extraPerson"]')
+      );
+      const dogInputs = Array.from(
+        editForm.querySelectorAll('input[name="dogName"]')
+      );
+
+      const extraPeople = extraPeopleInputs
+        .map((inp) => String(inp.value || "").trim())
+        .filter(Boolean);
+      const dogs = dogInputs
+        .map((inp) => String(inp.value || "").trim())
+        .filter(Boolean);
+
+      if (!primaryName) {
+        if (errEl) {
+          errEl.textContent = "Please enter a primary person name.";
+          errEl.hidden = false;
+        }
+        return;
+      }
+
+      if (email && !email.includes("@")) {
+        if (errEl) {
+          errEl.textContent =
+            "Please enter a valid email address (or leave it blank).";
+          errEl.hidden = false;
+        }
+        return;
+      }
+
+      const submitBtn = editForm.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Saving…";
+      }
+
+      const localSignups = readJsonStorage(STORAGE_KEYS.localEventSignups, []);
+      let foundLocal = false;
+      const updatedLocal = localSignups.map((item) => {
+        if (String(item.id) === String(signupId)) {
+          foundLocal = true;
+          return {
+            ...item,
+            name: primaryName,
+            email,
+            people: extraPeople,
+            dogs,
+          };
+        }
+        return item;
+      });
+      if (!foundLocal) {
+        const existingAdminSignup = (adminState.eventSignups || []).find(
+          (s) => String(s.id) === String(signupId)
+        );
+        if (existingAdminSignup) {
+          updatedLocal.push({
+            ...existingAdminSignup,
+            name: primaryName,
+            email,
+            people: extraPeople,
+            dogs,
+          });
+        }
+      }
+      writeJsonStorage(STORAGE_KEYS.localEventSignups, updatedLocal);
+
+      if (adminState.activeKey) {
+        await callSupabaseRpc("mochi_k_update_event_signup", {
+          p_key: adminState.activeKey,
+          p_signup_id: signupId,
+          p_name: primaryName,
+          p_email: email,
+          p_people: extraPeople,
+          p_dogs: dogs,
+        });
+      }
+
+      adminState.editingSignupId = null;
+      await loadAllAdminData();
+      showAdminToast(`Updated sign-up for ${primaryName}.`);
+    });
   }
 
   async function handleConfirmedAdminAction(type, id) {
     const token = adminState.activeKey;
     adminState.confirmTarget = null;
+
+    if (type === "event_signup") {
+      markIdDeleted(`signup:${id}`);
+      const localSignups = readJsonStorage(
+        STORAGE_KEYS.localEventSignups,
+        []
+      ).filter((s) => String(s.id) !== String(id));
+      writeJsonStorage(STORAGE_KEYS.localEventSignups, localSignups);
+
+      if (token) {
+        await callSupabaseRpc("mochi_k_delete_event_signup", {
+          p_key: token,
+          p_signup_id: id,
+        });
+      }
+      await loadAllAdminData();
+      showAdminToast("Removed sign-up from event.");
+      return;
+    }
 
     if (type === "dog" || type === "volunteer") {
       markIdDeleted(id);
