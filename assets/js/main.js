@@ -1757,7 +1757,7 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
     home: document.getElementById("view-home"),
     events: document.getElementById("view-events"),
     about: document.getElementById("view-about"),
-    board: document.getElementById("view-board"),
+    team: document.getElementById("view-board"),
     admin: document.getElementById("view-admin"),
   };
 
@@ -1774,7 +1774,8 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
   }
 
   function showView(viewName, pushHash = false) {
-    const targetView = views[viewName] ? viewName : "home";
+    const normalizedView = viewName === "board" ? "team" : viewName;
+    const targetView = views[normalizedView] ? normalizedView : "home";
 
     Object.entries(views).forEach(([key, section]) => {
       if (!section) return;
@@ -1861,8 +1862,13 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
       showView("events", false);
     } else if (hash === "about") {
       showView("about", false);
-    } else if (hash === "board" || hash === "our-board") {
-      showView("board", false);
+    } else if (
+      hash === "team" ||
+      hash === "our-team" ||
+      hash === "board" ||
+      hash === "our-board"
+    ) {
+      showView("team", false);
     } else if (hash === "admin" || hash === "checkin") {
       showView("admin", false);
     } else {

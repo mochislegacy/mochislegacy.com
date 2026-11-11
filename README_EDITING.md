@@ -45,7 +45,7 @@ Every editable section in `index.html` is wrapped in clearly marked banner comme
 | About page story & 3 goals | `SECTION: MOCHI'S STORY` |
 | About page Mochi photo strip | `SECTION: ABOUT PHOTO GALLERY` |
 | About Us vetting steps | `SECTION: HOW VETTING WORKS` |
-| Board member names, titles & bios | `SECTION: OUR BOARD PAGE` |
+| Team member names, titles & bios | `SECTION: OUR TEAM PAGE` |
 | Footer newsletter & IRS legal text | `SECTION: FOOTER MEMORIAL & LEGAL TEXT` |
 
 ### Example: Editing aHeadline or Paragraph
@@ -177,9 +177,9 @@ When an event has passed and no new events are scheduled yet, replace the event 
    - Set **`alt="..."`** to a short sentence describing the photo for screen-reader users.
    - *(Optional)* If your photo's subject is off-center, you can adjust how it crops inside the rounded tile by adding `style="object-position: 50% 35%"` to the `<img>` tag (the first percentage is horizontal left-to-right `0%`–`100%`; the second is vertical top-to-bottom `0%`–`100%`).
 
-### Adding or Updating a Board Member Portrait & Bio
+### Adding or Updating a Team Member Portrait & Bio
 1. Place the square portrait image inside **`assets/images/board/`** (for example, `assets/images/board/jane-doe.webp`).
-2. Search `index.html` for `SECTION: OUR BOARD PAGE` and copy-paste a `<li class="board-card">...</li>` block:
+2. Search `index.html` for `SECTION: OUR TEAM PAGE` and copy-paste a `<li class="board-card">...</li>` block:
 
 ```html
 <li class="board-card">
@@ -198,7 +198,7 @@ When an event has passed and no new events are scheduled yet, replace the event 
     <div class="board-header">
       <h3 class="board-name">Jane Doe</h3>
       <div class="board-role-row">
-        <span class="board-role">Board Member</span>
+        <span class="board-role">Team Member</span>
         <span class="board-dot" aria-hidden="true">·</span>
         <span class="board-dog-title">Chief Belly-Rub Officer</span>
       </div>
