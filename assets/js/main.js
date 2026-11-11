@@ -236,7 +236,7 @@ begin
 end $$;
 
 -- 4b. Open Event Sign-Ups (Public Gaggle Sign-Ups & Admin Management)
-create table if not exists public.mochi_event_signups (
+create table if not exists public.mochi_gaggle_signups (
   id          uuid primary key default gen_random_uuid(),
   event_id    uuid not null references public.mochi_events(id) on delete cascade,
   name        text not null,
@@ -245,13 +245,14 @@ create table if not exists public.mochi_event_signups (
   dogs        jsonb not null default '[]'::jsonb,
   created_at  timestamptz not null default now()
 );
-alter table public.mochi_event_signups enable row level security;
-revoke all on public.mochi_event_signups from anon, authenticated;
+alter table public.mochi_gaggle_signups enable row level security;
+revoke all on public.mochi_gaggle_signups from anon, authenticated;
 
 create or replace function public.mochi_public_event_signups()
-returns jsonb language sql security definer set search_path = public as $$
-  select coalesce(
-    jsonb_agg(
+returns jsonb language plpgsql security definer set search_path = public as $$
+begin
+  return coalesce((
+    select jsonb_agg(
       jsonb_build_object(
         'id', s.id,
         'event_id', s.event_id,
@@ -261,11 +262,10 @@ returns jsonb language sql security definer set search_path = public as $$
         'created_at', s.created_at
       )
       order by s.created_at asc
-    ),
-    '[]'::jsonb
-  )
-  from public.mochi_event_signups s;
-$$;
+    )
+    from public.mochi_gaggle_signups s
+  ), '[]'::jsonb);
+end $$;
 
 create or replace function public.mochi_submit_event_signup(
   p_event_id uuid,
@@ -281,7 +281,7 @@ begin
   if coalesce(trim(p_name), '') = '' then
     raise exception 'Please enter your name.' using errcode = 'P0001';
   end if;
-  insert into public.mochi_event_signups (event_id, name, email, people, dogs)
+  insert into public.mochi_gaggle_signups (event_id, name, email, people, dogs)
   values (
     p_event_id,
     trim(p_name),
@@ -310,7 +310,7 @@ begin
       )
       order by s.created_at asc
     )
-    from public.mochi_event_signups s
+    from public.mochi_gaggle_signups s
   ), '[]'::jsonb);
 end $$;
 
@@ -325,7 +325,7 @@ create or replace function public.mochi_k_update_event_signup(
 returns boolean language plpgsql security definer set search_path = public as $$
 begin
   perform public.mochi_k_check(p_key);
-  update public.mochi_event_signups
+  update public.mochi_gaggle_signups
      set name   = trim(p_name),
          email  = coalesce(lower(trim(p_email)), ''),
          people = coalesce(p_people, '[]'::jsonb),
@@ -338,7 +338,7 @@ create or replace function public.mochi_k_delete_event_signup(p_key text, p_sign
 returns boolean language plpgsql security definer set search_path = public as $$
 begin
   perform public.mochi_k_check(p_key);
-  delete from public.mochi_event_signups where id = p_signup_id;
+  delete from public.mochi_gaggle_signups where id = p_signup_id;
   return found;
 end $$;
 
