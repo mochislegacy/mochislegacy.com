@@ -17,8 +17,8 @@
      0. Constants, Initial Admin Keys & Storage Helpers
      ========================================================================== */
 
-  const SUPABASE_URL = "https://yhkzgnjiejbdzvgbldxy.supabase.co";
-  const SUPABASE_KEY = "sb_publishable_t4YsmzF7VrN_BdkKQKypqw_ut60FZFU";
+  const SUPABASE_URL = "https://reaejdpsapuvuquxfvip.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_VFVdXUVdjt_OUJrgnas3CA_FVd2kkug";
   const DENVER_TZ = "America/Denver";
 
   const STORAGE_KEYS = {
@@ -33,47 +33,7 @@
     deletedIds: "mochi-admin-deleted-ids",
   };
 
-  // Super Admin Key (Nolan Bonnie) & Initial Board Member Admin Keys
-  const SUPER_ADMIN_KEY = "a1f09b4e7c2d8365e04192b8c7d653f1";
-
-  const DEFAULT_ADMIN_KEYS = [
-    {
-      id: "key-nolan-super",
-      name: "Nolan Bonnie",
-      email: "",
-      role: "super_admin",
-      title: "Secretary · Super Admin",
-      key: SUPER_ADMIN_KEY,
-      created_at: "2026-10-22T00:00:00Z",
-    },
-    {
-      id: "key-ed-admin",
-      name: "Ed Bardzik",
-      email: "",
-      role: "admin",
-      title: "President & Founder",
-      key: "b2e18c5f6d3a9476f15203c9d8e764a2",
-      created_at: "2026-10-22T00:00:00Z",
-    },
-    {
-      id: "key-sarah-admin",
-      name: "Sarah Montgomery",
-      email: "",
-      role: "admin",
-      title: "Advisor",
-      key: "c3d27a6e5b4f0587a26314dae9f875b3",
-      created_at: "2026-10-22T00:00:00Z",
-    },
-    {
-      id: "key-dylan-admin",
-      name: "Dylan Agema",
-      email: "",
-      role: "admin",
-      title: "Treasurer",
-      key: "d4c36b7d4a5e1698b37425ebf0a986c4",
-      created_at: "2026-10-22T00:00:00Z",
-    },
-  ];
+  // Admin keys live only in the database. Each admin signs in with a personal #k=… link.
 
   // One-time SQL setup script for activating keys inside Supabase Postgres
   const SUPABASE_SETUP_SQL = `-- ============================================================================
@@ -406,14 +366,10 @@ grant execute on function public.mochi_k_create_key(text, text, text)           
 grant execute on function public.mochi_k_list_keys(text)                             to anon, authenticated;
 grant execute on function public.mochi_k_revoke_key(text, uuid, text)               to anon, authenticated;
 
--- 7. Seed initial admin keys
-insert into public.mochi_admin_keys (label, email, key, is_super)
-values
-  ('Nolan Bonnie',     null, 'a1f09b4e7c2d8365e04192b8c7d653f1', true),
-  ('Ed Bardzik',       null, 'b2e18c5f6d3a9476f15203c9d8e764a2', false),
-  ('Sarah Montgomery', null, 'c3d27a6e5b4f0587a26314dae9f875b3', false),
-  ('Dylan Agema',      null, 'd4c36b7d4a5e1698b37425ebf0a986c4', false)
-on conflict (key) do nothing;
+-- 7. First Super Admin key (created once, with a random value)
+insert into public.mochi_admin_keys (label, key, is_super)
+select 'Nolan Bonnie', replace(gen_random_uuid()::text, '-', ''), true
+where not exists (select 1 from public.mochi_admin_keys where is_super);
 
 select label, key, is_super, created_at from public.mochi_admin_keys where revoked_at is null order by is_super desc, created_at asc;`;
 
@@ -2138,14 +2094,14 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
     const revoked = getRevokedKeysSet();
     const map = new Map();
 
-    [...DEFAULT_ADMIN_KEYS, ...customKeys].forEach((item) => {
+    customKeys.forEach((item) => {
       if (!item || !item.key) return;
       const k = String(item.key).toLowerCase();
       if (revoked.has(k)) return;
       map.set(k, {
         ...item,
         key: k,
-        role: k === SUPER_ADMIN_KEY ? "super_admin" : item.role || "admin",
+        role: item.role || "admin",
       });
     });
 
@@ -2181,9 +2137,7 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
     // 1. Check Supabase mochi_k_whoami (preferred secure RPC)
     const whoRes = await callSupabaseRpc("mochi_k_whoami", { p_key: cleanKey });
     if (whoRes.ok && whoRes.data) {
-      const isSuper = Boolean(
-        whoRes.data.is_super || cleanKey === SUPER_ADMIN_KEY
-      );
+      const isSuper = Boolean(whoRes.data.is_super);
       return {
         ok: true,
         key: cleanKey,
@@ -2218,7 +2172,7 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
           message: "This key is not an administrator key.",
         };
       }
-      const isSuper = cleanKey === SUPER_ADMIN_KEY;
+      const isSuper = false;
       return {
         ok: true,
         key: cleanKey,
@@ -2236,8 +2190,7 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
 
     // 3. Fallback: Local known keys (for offline testing or before Supabase SQL migration is run)
     if (matchedLocal) {
-      const isSuper =
-        cleanKey === SUPER_ADMIN_KEY || matchedLocal.role === "super_admin";
+      const isSuper = matchedLocal.role === "super_admin";
       return {
         ok: true,
         key: cleanKey,
@@ -2286,9 +2239,7 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
 
     adminState.activeKey = auth.key;
     adminState.adminProfile = auth.profile;
-    adminState.isSuperAdmin = Boolean(
-      auth.isSuper || auth.key === SUPER_ADMIN_KEY
-    );
+    adminState.isSuperAdmin = Boolean(auth.isSuper);
 
     if (adminGate) adminGate.hidden = true;
     if (adminDashboard) adminDashboard.hidden = false;
@@ -2660,7 +2611,7 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
           const clean = String(rk.key).toLowerCase();
           if (revoked.has(clean)) return;
           const existing = keysMap.get(clean);
-          const isSuper = Boolean(rk.is_super || clean === SUPER_ADMIN_KEY);
+          const isSuper = Boolean(rk.is_super);
           keysMap.set(clean, {
             id: rk.id || existing?.id || `key-${clean.slice(0, 8)}`,
             name: rk.label || rk.name || existing?.name || "Admin",
@@ -3278,7 +3229,7 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
 
     keysListEl.innerHTML = adminState.keys
       .map((item) => {
-        const isSuper = item.key === SUPER_ADMIN_KEY;
+        const isSuper = item.role === "super_admin";
         const magicLink = buildAdminMagicLink(item.key);
         return `
           <article class="admin-item-card">
@@ -3718,7 +3669,11 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
     if (type === "key") {
       if (!adminState.isSuperAdmin) return;
       const targetKey = String(id).toLowerCase();
-      if (targetKey === SUPER_ADMIN_KEY) {
+      const targetIsSuper = adminState.keys.some(
+        (k) =>
+          String(k.key).toLowerCase() === targetKey && k.role === "super_admin"
+      );
+      if (targetIsSuper) {
         showAdminToast("Cannot revoke the Super Admin key.");
         return;
       }

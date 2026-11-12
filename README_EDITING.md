@@ -250,11 +250,11 @@ The website includes a modern, zero-dependency **Admin Dashboard** designed for 
 To enable live cross-device database syncing, run the migration script once in your Supabase project:
 
 1. Open your Supabase Dashboard:
-   [https://supabase.com/dashboard/project/yhkzgnjiejbdzvgbldxy/sql/new](https://supabase.com/dashboard/project/yhkzgnjiejbdzvgbldxy/sql/new)
+   [https://supabase.com/dashboard/project/reaejdpsapuvuquxfvip/sql/new](https://supabase.com/dashboard/project/reaejdpsapuvuquxfvip/sql/new)
 2. Open the file **`new_web/supabase/admin_setup.sql`** in any text editor, select all text, and copy it.
    *(Alternatively, log into the Admin Dashboard and click the **"Copy SQL Script"** button on the top banner).*
 3. Paste the entire SQL script into the Supabase SQL Editor and click **Run**.
-4. The script creates the secure `mochi_admin_keys` table, installs the `mochi_k_*` server-side security functions, and seeds the initial keys.
+4. The script creates the secure `mochi_admin_keys` table, installs the `mochi_k_*` server-side security functions, and creates the first Super Admin key.
 
 ---
 
@@ -263,15 +263,8 @@ To enable live cross-device database syncing, run the migration script once in y
 There are two easy ways to access the admin portal:
 
 #### Option A: Direct Magic Link (Recommended)
-Open your personal `#k=...` link in any browser (desktop or mobile phone). The browser will securely save your key in local storage so you stay logged in:
-- **Super Admin (Nolan Bonnie):**
-  `https://mochislegacy.org/#k=a1f09b4e7c2d8365e04192b8c7d653f1`
-- **President & Founder (Ed Bardzik):**
-  `https://mochislegacy.org/#k=b2e18c5f6d3a9476f15203c9d8e764a2`
-- **Advisor (Sarah Montgomery):**
-  `https://mochislegacy.org/#k=c3d27a6e5b4f0587a26314dae9f875b3`
-- **Treasurer (Dylan Agema):**
-  `https://mochislegacy.org/#k=d4c36b7d4a5e1698b37425ebf0a986c4`
+Open your personal `#k=...` link in any browser (desktop or mobile phone). The browser will securely save your key in local storage so you stay logged in.
+Links are personal and are never written in this repository. Ask the Super Admin for yours.
 
 #### Option B: Sign-in Gate
 1. Click the **Admin** link in the top navigation bar (or navigate to `/#admin`).
