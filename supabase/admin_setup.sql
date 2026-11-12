@@ -173,6 +173,24 @@ begin
   return true;
 end $$;
 
+create or replace function public.mochi_k_update_event(
+  p_key text, p_event_id uuid, p_title text, p_kind text, p_starts_at timestamptz, p_ends_at timestamptz,
+  p_meeting_spot text, p_cap integer, p_notes text)
+returns boolean language plpgsql security definer set search_path = public as $$
+begin
+  perform public.mochi_k_check(p_key);
+  update public.mochi_events
+     set title        = trim(p_title),
+         kind         = trim(p_kind),
+         starts_at    = p_starts_at,
+         ends_at      = p_ends_at,
+         meeting_spot = trim(p_meeting_spot),
+         cap          = p_cap,
+         notes        = nullif(trim(coalesce(p_notes, '')), '')
+   where id = p_event_id;
+  return found;
+end $$;
+
 -- Deletes the event. If dogs are already signed up to it (so it can't be
 -- deleted outright), it is unpublished instead so it disappears from the site.
 create or replace function public.mochi_k_delete_event(p_key text, p_event_id uuid)
@@ -358,6 +376,7 @@ grant execute on function public.mochi_k_delete_submission(text, text, uuid)    
 grant execute on function public.mochi_k_delete_subscriber(text, text)               to anon, authenticated;
 grant execute on function public.mochi_k_events(text)                                to anon, authenticated;
 grant execute on function public.mochi_k_add_event(text, text, text, timestamptz, timestamptz, text, integer, text) to anon, authenticated;
+grant execute on function public.mochi_k_update_event(text, uuid, text, text, timestamptz, timestamptz, text, integer, text) to anon, authenticated;
 grant execute on function public.mochi_k_delete_event(text, uuid)                    to anon, authenticated;
 grant execute on function public.mochi_public_event_signups()                        to anon, authenticated;
 grant execute on function public.mochi_submit_event_signup(uuid, text, text, jsonb, jsonb) to anon, authenticated;

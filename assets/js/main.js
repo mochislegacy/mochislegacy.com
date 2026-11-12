@@ -223,6 +223,24 @@ begin
   return true;
 end $$;
 
+create or replace function public.mochi_k_update_event(
+  p_key text, p_event_id uuid, p_title text, p_kind text, p_starts_at timestamptz, p_ends_at timestamptz,
+  p_meeting_spot text, p_cap integer, p_notes text)
+returns boolean language plpgsql security definer set search_path = public as $$
+begin
+  perform public.mochi_k_check(p_key);
+  update public.mochi_events
+     set title        = trim(p_title),
+         kind         = trim(p_kind),
+         starts_at    = p_starts_at,
+         ends_at      = p_ends_at,
+         meeting_spot = trim(p_meeting_spot),
+         cap          = p_cap,
+         notes        = nullif(trim(coalesce(p_notes, '')), '')
+   where id = p_event_id;
+  return found;
+end $$;
+
 create or replace function public.mochi_k_delete_event(p_key text, p_event_id uuid)
 returns boolean language plpgsql security definer set search_path = public as $$
 begin
@@ -396,6 +414,7 @@ grant execute on function public.mochi_k_delete_submission(text, text, uuid)    
 grant execute on function public.mochi_k_delete_subscriber(text, text)               to anon, authenticated;
 grant execute on function public.mochi_k_events(text)                                to anon, authenticated;
 grant execute on function public.mochi_k_add_event(text, text, text, timestamptz, timestamptz, text, integer, text) to anon, authenticated;
+grant execute on function public.mochi_k_update_event(text, uuid, text, text, timestamptz, timestamptz, text, integer, text) to anon, authenticated;
 grant execute on function public.mochi_k_delete_event(text, uuid)                    to anon, authenticated;
 grant execute on function public.mochi_public_event_signups()                        to anon, authenticated;
 grant execute on function public.mochi_submit_event_signup(uuid, text, text, jsonb, jsonb) to anon, authenticated;
@@ -993,6 +1012,60 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
     return new Date(adjusted + (hour * 60 + minute) * 60000).toISOString();
   }
 
+  function isoToDenverLocal(isoStr) {
+    if (!isoStr) return { date: "", time: "" };
+    try {
+      const parts = getDenverParts(isoStr, {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+      });
+      return {
+        date: `${parts.year}-${parts.month}-${parts.day}`,
+        time: `${parts.hour}:${parts.minute}`,
+      };
+    } catch (_) {
+      return { date: "", time: "" };
+    }
+  }
+
+  function parseMeetingSpot(rawSpot, explicitMapUrl = "") {
+    const raw = String(rawSpot || "").trim();
+    let spotName = raw;
+    let customMapUrl = String(explicitMapUrl || "").trim();
+
+    const sepIndex = raw.indexOf(" || ");
+    if (sepIndex !== -1) {
+      spotName = raw.slice(0, sepIndex).trim();
+      const extractedUrl = raw.slice(sepIndex + 4).trim();
+      if (!customMapUrl && extractedUrl) {
+        customMapUrl = extractedUrl;
+      }
+    }
+
+    const defaultSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+      `${spotName} Boulder CO`
+    )}`;
+
+    return {
+      spotName,
+      customMapUrl,
+      mapsUrl: customMapUrl || defaultSearchUrl,
+    };
+  }
+
+  function formatMeetingSpotForSave(spotName, customMapUrl) {
+    const cleanSpot = String(spotName || "").trim();
+    const cleanUrl = String(customMapUrl || "").trim();
+    if (cleanUrl) {
+      return `${cleanSpot} || ${cleanUrl}`;
+    }
+    return cleanSpot;
+  }
+
   function getDefaultUpcomingSaturday() {
     const now = new Date();
     const dayOfWeek = now.getDay();
@@ -1266,6 +1339,7 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
         if (emptyTicket) emptyTicket.hidden = true;
         upcomingEvents.forEach((ev) => {
           const whenText = formatEventWindow(ev.starts_at, ev.ends_at, false);
+          const { spotName } = parseMeetingSpot(ev.meeting_spot, ev.map_url);
           const ticket = document.createElement("div");
           ticket.className = "ticket landing-ticket";
           ticket.dataset.dynamicTicket = "true";
@@ -1273,7 +1347,7 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
             <div class="landing-ticket-detail">
               <p class="landing-event-kind"><span>${escapeHtml(ev.kind || "Gaggle walk")}</span></p>
               <h3 class="landing-event-title">${escapeHtml(ev.title)}</h3>
-              <p class="landing-event-spot">${escapeHtml(ev.meeting_spot)}</p>
+              <p class="landing-event-spot">${escapeHtml(spotName)}</p>
               <p class="landing-date">${escapeHtml(whenText)}</p>
             </div>
             <div class="landing-ticket-stub">
@@ -1320,9 +1394,10 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
           const cap = Number(ev.cap) || 15;
           const confirmedDogs = Math.max(Number(ev.confirmed) || 0, totalDogs);
           const spotsOpen = Math.max(0, cap - confirmedDogs);
-          const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-            `${ev.meeting_spot || ""} Boulder CO`
-          )}`;
+          const { spotName, mapsUrl } = parseMeetingSpot(
+            ev.meeting_spot,
+            ev.map_url
+          );
           const isFormOpen = openEventSignupForms.has(eventIdStr);
 
           const rosterListHtml =
@@ -1398,7 +1473,7 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
             <p class="event-card-spot">
               Meet at:
               <a href="${escapeHtml(mapsUrl)}" target="_blank" rel="noopener noreferrer" class="event-map-link">
-                ${escapeHtml(ev.meeting_spot)} ↗
+                ${escapeHtml(spotName)} ↗
               </a>
             </p>
             ${
@@ -2116,6 +2191,7 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
     submissionFilter: "all",
     confirmTarget: null, // { type: 'dog'|'volunteer'|'event'|'event_signup'|'subscriber'|'key', id: string }
     editingSignupId: null,
+    editingEventId: null,
     dogs: [],
     volunteers: [],
     subscribers: [],
@@ -3114,6 +3190,159 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
         const windowStr = formatEventWindow(ev.starts_at, ev.ends_at, true);
         const isPast = Date.parse(ev.ends_at || ev.starts_at) < Date.now();
         const cap = Number(ev.cap) || 15;
+        const { spotName, customMapUrl, mapsUrl } = parseMeetingSpot(
+          ev.meeting_spot,
+          ev.map_url
+        );
+        const isEditingEvent = String(adminState.editingEventId) === eventIdStr;
+        const startLocal = isoToDenverLocal(ev.starts_at);
+        const endLocal = isoToDenverLocal(ev.ends_at);
+
+        const editEventFormHtml = isEditingEvent
+          ? `
+            <form
+              class="admin-signup-edit-form"
+              data-admin-event-edit-form="${escapeHtml(eventIdStr)}"
+              novalidate
+            >
+              <div class="admin-signup-edit-header">
+                <strong class="admin-signup-edit-title">Edit Event Details</strong>
+                <button
+                  type="button"
+                  data-cancel-edit-event="${escapeHtml(eventIdStr)}"
+                  class="admin-btn-secondary admin-btn-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+
+              <div class="form-grid sm-2col">
+                <label>
+                  <span class="form-label">Event title *</span>
+                  <input
+                    type="text"
+                    name="title"
+                    required
+                    maxlength="80"
+                    value="${escapeHtml(ev.title || "")}"
+                    class="form-input"
+                  />
+                </label>
+
+                <label>
+                  <span class="form-label">Category badge *</span>
+                  <input
+                    type="text"
+                    name="kind"
+                    list="admin-event-kinds"
+                    required
+                    maxlength="40"
+                    value="${escapeHtml(ev.kind || "Gaggle walk")}"
+                    class="form-input"
+                  />
+                </label>
+
+                <label>
+                  <span class="form-label">Date (Mountain Time) *</span>
+                  <input
+                    type="date"
+                    name="date"
+                    required
+                    value="${escapeHtml(startLocal.date)}"
+                    class="form-input"
+                  />
+                </label>
+
+                <div class="form-grid-2col">
+                  <label>
+                    <span class="form-label">Start time *</span>
+                    <input
+                      type="time"
+                      name="startTime"
+                      required
+                      value="${escapeHtml(startLocal.time)}"
+                      class="form-input"
+                    />
+                  </label>
+                  <label>
+                    <span class="form-label">End time *</span>
+                    <input
+                      type="time"
+                      name="endTime"
+                      required
+                      value="${escapeHtml(endLocal.time)}"
+                      class="form-input"
+                    />
+                  </label>
+                </div>
+
+                <label>
+                  <span class="form-label">Meeting spot / Location *</span>
+                  <input
+                    type="text"
+                    name="meetingSpot"
+                    required
+                    maxlength="160"
+                    value="${escapeHtml(spotName)}"
+                    class="form-input"
+                  />
+                </label>
+
+                <label>
+                  <span class="form-label">
+                    Google Maps link <span class="form-label-optional">(optional)</span>
+                  </span>
+                  <input
+                    type="url"
+                    name="mapUrl"
+                    maxlength="500"
+                    value="${escapeHtml(customMapUrl)}"
+                    placeholder="https://maps.app.goo.gl/..."
+                    class="form-input"
+                  />
+                </label>
+
+                <label>
+                  <span class="form-label">Max dogs (capacity) *</span>
+                  <input
+                    type="number"
+                    name="cap"
+                    min="1"
+                    max="200"
+                    required
+                    value="${escapeHtml(String(cap))}"
+                    class="form-input"
+                  />
+                </label>
+
+                <label class="sm-span-2">
+                  <span class="form-label">Notes / What to bring (optional)</span>
+                  <textarea
+                    name="notes"
+                    rows="2"
+                    maxlength="1000"
+                    class="form-input"
+                  >${escapeHtml(ev.notes || "")}</textarea>
+                </label>
+              </div>
+
+              <p class="admin-alert-error" data-admin-event-edit-error hidden role="alert"></p>
+
+              <div class="admin-form-actions">
+                <button type="submit" class="admin-btn-primary admin-btn-sm">
+                  Save Event Changes
+                </button>
+                <button
+                  type="button"
+                  data-cancel-edit-event="${escapeHtml(eventIdStr)}"
+                  class="admin-btn-secondary admin-btn-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          `
+          : "";
 
         return `
           <article class="admin-item-card">
@@ -3124,13 +3353,22 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
                 <span class="stage-badge ${isPast ? "tone-plain" : "tone-ok"}">
                   ${isPast ? "Past" : "Published"}
                 </span>
+                ${
+                  customMapUrl
+                    ? `<span class="stage-badge tone-plain">Custom Map Pin</span>`
+                    : ""
+                }
               </div>
             </div>
             <p class="admin-item-owner">
               <strong>${escapeHtml(windowStr)}</strong> (Mountain Time)
             </p>
             <p class="admin-item-meta">
-              Location: ${escapeHtml(ev.meeting_spot)} · Dog Capacity: ${totalDogs} / ${cap} dogs · ${totalPeople} ${
+              Location:
+              <a href="${escapeHtml(mapsUrl)}" target="_blank" rel="noopener noreferrer" class="event-map-link">
+                ${escapeHtml(spotName)} ↗
+              </a>
+              · Dog Capacity: ${totalDogs} / ${cap} dogs · ${totalPeople} ${
           totalPeople === 1 ? "person" : "people"
         } attending
             </p>
@@ -3139,6 +3377,7 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
                 ? `<blockquote class="admin-item-notes">${escapeHtml(ev.notes)}</blockquote>`
                 : ""
             }
+            ${editEventFormHtml}
 
             <div class="admin-event-signups-box">
               <div class="admin-event-signups-header">
@@ -3193,12 +3432,21 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
             </div>
 
             <div class="admin-item-footer">
-              ${renderConfirmOrActionHtml(
-                "event",
-                ev.id,
-                ev.title,
-                "Delete Event"
-              )}
+              <div class="admin-signup-card-actions">
+                <button
+                  type="button"
+                  data-start-edit-event="${escapeHtml(eventIdStr)}"
+                  class="admin-btn-secondary admin-btn-sm"
+                >
+                  Edit Event
+                </button>
+                ${renderConfirmOrActionHtml(
+                  "event",
+                  ev.id,
+                  ev.title,
+                  "Delete Event"
+                )}
+              </div>
             </div>
           </article>
         `;
@@ -3391,6 +3639,25 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
         return;
       }
 
+      // A2b. Start editing an event
+      const startEditEventBtn = event.target.closest("[data-start-edit-event]");
+      if (startEditEventBtn) {
+        adminState.editingEventId = startEditEventBtn.dataset.startEditEvent;
+        adminState.confirmTarget = null;
+        renderEventsPanel();
+        return;
+      }
+
+      // A2c. Cancel editing an event
+      const cancelEditEventBtn = event.target.closest(
+        "[data-cancel-edit-event]"
+      );
+      if (cancelEditEventBtn) {
+        adminState.editingEventId = null;
+        renderEventsPanel();
+        return;
+      }
+
       // A3. Add a person row inside admin edit form
       const adminAddPersonBtn = event.target.closest(
         "[data-admin-add-person-row]"
@@ -3471,6 +3738,160 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
     });
 
     viewAdminSection.addEventListener("submit", async (event) => {
+      // 1. Handle inline Edit Event form submission
+      const eventEditForm = event.target.closest("[data-admin-event-edit-form]");
+      if (eventEditForm) {
+        event.preventDefault();
+        const eventId = eventEditForm.dataset.adminEventEditForm;
+        const errEl = eventEditForm.querySelector(
+          "[data-admin-event-edit-error]"
+        );
+        if (errEl) errEl.hidden = true;
+
+        const fd = new FormData(eventEditForm);
+        const title = String(fd.get("title") || "").trim();
+        const kind = String(fd.get("kind") || "").trim();
+        const date = String(fd.get("date") || "").trim();
+        const startTime = String(fd.get("startTime") || "").trim();
+        const endTime = String(fd.get("endTime") || "").trim();
+        const meetingSpot = String(fd.get("meetingSpot") || "").trim();
+        const mapUrl = String(fd.get("mapUrl") || "").trim();
+        const rawCap = String(fd.get("cap") || "").trim();
+        const parsedCap = Number(rawCap);
+        const notes = String(fd.get("notes") || "").trim() || null;
+
+        if (
+          !title ||
+          !kind ||
+          !date ||
+          !startTime ||
+          !endTime ||
+          !meetingSpot ||
+          !rawCap ||
+          !Number.isInteger(parsedCap) ||
+          parsedCap < 1 ||
+          parsedCap > 200
+        ) {
+          if (errEl) {
+            errEl.textContent =
+              "Please fill in the title, category, date, start/end time, meeting spot, and max dogs (1–200).";
+            errEl.hidden = false;
+          }
+          return;
+        }
+
+        if (endTime <= startTime) {
+          if (errEl) {
+            errEl.textContent = "End time must be after the start time.";
+            errEl.hidden = false;
+          }
+          return;
+        }
+
+        if (mapUrl && !/^https?:\/\//i.test(mapUrl)) {
+          if (errEl) {
+            errEl.textContent =
+              "Please enter a full Google Maps URL starting with https:// (or leave it blank).";
+            errEl.hidden = false;
+          }
+          return;
+        }
+
+        const cap = parsedCap;
+        const startsAt = denverLocalToIso(date, startTime);
+        const endsAt = denverLocalToIso(date, endTime);
+        const packedMeetingSpot = formatMeetingSpotForSave(meetingSpot, mapUrl);
+
+        const submitBtn = eventEditForm.querySelector('button[type="submit"]');
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = "Saving…";
+        }
+
+        let savedRemotely = false;
+        let lastRpcError = null;
+
+        if (adminState.activeKey) {
+          let rpcRes = await callSupabaseRpc("mochi_k_update_event", {
+            p_key: adminState.activeKey,
+            p_event_id: eventId,
+            p_title: title,
+            p_kind: kind,
+            p_starts_at: startsAt,
+            p_ends_at: endsAt,
+            p_meeting_spot: packedMeetingSpot,
+            p_cap: cap,
+            p_notes: notes,
+          });
+
+          if (
+            !rpcRes.ok &&
+            (rpcRes.code === "PGRST202" ||
+              rpcRes.code === "404" ||
+              rpcRes.code === "42883")
+          ) {
+            rpcRes = await callSupabaseRpc("mochi_admin_save_event", {
+              p_token: adminState.activeKey,
+              p_id: eventId,
+              p_title: title,
+              p_kind: kind,
+              p_min_stage: "gaggle",
+              p_starts_at: startsAt,
+              p_ends_at: endsAt,
+              p_meeting_spot: packedMeetingSpot,
+              p_cap: cap,
+              p_status: "published",
+              p_notes: notes,
+            });
+          }
+
+          if (rpcRes.ok) {
+            savedRemotely = true;
+          } else {
+            lastRpcError = rpcRes.message;
+          }
+        }
+
+        const localEvents = readJsonStorage(STORAGE_KEYS.localEvents, []);
+        const updatedLocal = localEvents.map((item) => {
+          if (String(item.id) === String(eventId)) {
+            return {
+              ...item,
+              title,
+              kind,
+              starts_at: startsAt,
+              ends_at: endsAt,
+              meeting_spot: packedMeetingSpot,
+              cap,
+              notes,
+            };
+          }
+          return item;
+        });
+        writeJsonStorage(STORAGE_KEYS.localEvents, updatedLocal);
+
+        if (!savedRemotely && !adminState.supabaseNeedsSetup) {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Save Event Changes";
+          }
+          if (errEl) {
+            errEl.textContent =
+              lastRpcError ||
+              "Could not update event in the database. Make sure the mochi_k_update_event SQL function has been added in Supabase.";
+            errEl.hidden = false;
+          }
+          return;
+        }
+
+        adminState.editingEventId = null;
+        await loadAllAdminData();
+        refreshPublicEvents();
+        showAdminToast(`Updated "${title}".`);
+        return;
+      }
+
+      // 2. Handle inline Edit Sign-Up form submission
       const editForm = event.target.closest("[data-admin-signup-edit-form]");
       if (!editForm) return;
       event.preventDefault();
@@ -3783,6 +4204,7 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
     const startInput = adminEventForm.elements.namedItem("startTime");
     const endInput = adminEventForm.elements.namedItem("endTime");
     const spotInput = adminEventForm.elements.namedItem("meetingSpot");
+    const mapUrlInput = adminEventForm.elements.namedItem("mapUrl");
     const capInput = adminEventForm.elements.namedItem("cap");
     const notesInput = adminEventForm.elements.namedItem("notes");
 
@@ -3792,6 +4214,7 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
     if (startInput) startInput.value = "";
     if (endInput) endInput.value = "";
     if (spotInput) spotInput.value = "";
+    if (mapUrlInput) mapUrlInput.value = "";
     if (capInput) capInput.value = "";
     if (notesInput) notesInput.value = "";
   }
@@ -3830,6 +4253,7 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
       const startTime = String(fd.get("startTime") || "").trim();
       const endTime = String(fd.get("endTime") || "").trim();
       const meetingSpot = String(fd.get("meetingSpot") || "").trim();
+      const mapUrl = String(fd.get("mapUrl") || "").trim();
       const rawCap = String(fd.get("cap") || "").trim();
       const parsedCap = Number(rawCap);
       const notes = String(fd.get("notes") || "").trim() || null;
@@ -3854,7 +4278,17 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
         return;
       }
 
+      if (mapUrl && !/^https?:\/\//i.test(mapUrl)) {
+        if (adminEventFormError) {
+          adminEventFormError.textContent =
+            "Please enter a full Google Maps URL starting with https:// (or leave it blank).";
+          adminEventFormError.hidden = false;
+        }
+        return;
+      }
+
       const cap = parsedCap;
+      const packedMeetingSpot = formatMeetingSpotForSave(meetingSpot, mapUrl);
 
       if (endTime <= startTime) {
         if (adminEventFormError) {
@@ -3884,7 +4318,7 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
           p_kind: kind,
           p_starts_at: startsAt,
           p_ends_at: endsAt,
-          p_meeting_spot: meetingSpot,
+          p_meeting_spot: packedMeetingSpot,
           p_cap: cap,
           p_notes: notes,
         });
@@ -3902,7 +4336,7 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
             p_min_stage: "gaggle",
             p_starts_at: startsAt,
             p_ends_at: endsAt,
-            p_meeting_spot: meetingSpot,
+            p_meeting_spot: packedMeetingSpot,
             p_cap: cap,
             p_status: "published",
             p_notes: notes,
@@ -3926,7 +4360,7 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
             min_stage: "gaggle",
             starts_at: startsAt,
             ends_at: endsAt,
-            meeting_spot: meetingSpot,
+            meeting_spot: packedMeetingSpot,
             cap,
             confirmed: 0,
             status: "published",
