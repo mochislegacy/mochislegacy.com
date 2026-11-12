@@ -35,6 +35,20 @@
 
   // Admin keys live only in the database. Each admin signs in with a personal #k=… link.
 
+  // Board titles shown in the admin dashboard, matched on the name each admin key carries.
+  const ADMIN_TITLES = {
+    "Nolan Bonnie": "Secretary",
+    "Ed Bardzik": "President & Founder",
+    "Sarah Montgomery": "Advisor",
+    "Dylan Agema": "Treasurer",
+  };
+
+  function adminTitleFor(name, isSuper, fallback) {
+    const title = ADMIN_TITLES[name];
+    if (isSuper) return title ? `${title} · Super Admin` : "Super Admin";
+    return title || fallback;
+  }
+
   // One-time SQL setup script for activating keys inside Supabase Postgres
   const SUPABASE_SETUP_SQL = `-- ============================================================================
 -- MOCHI'S LEGACY — ADMIN DASHBOARD SETUP (run ONCE in the Supabase SQL Editor)
@@ -2146,9 +2160,11 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
           name: whoRes.data.label || matchedLocal?.name || "Admin",
           email: matchedLocal?.email || "",
           role: isSuper ? "super_admin" : "admin",
-          title: isSuper
-            ? "Secretary · Super Admin"
-            : matchedLocal?.title || "Founder / Admin",
+          title: adminTitleFor(
+            whoRes.data.label,
+            isSuper,
+            matchedLocal?.title || "Founder / Admin"
+          ),
         },
       };
     }
@@ -2181,9 +2197,11 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
           name: meRes.data.person.name || matchedLocal?.name || "Admin",
           email: meRes.data.person.email || matchedLocal?.email || "",
           role: isSuper ? "super_admin" : "admin",
-          title: isSuper
-            ? "Secretary · Super Admin"
-            : matchedLocal?.title || "Founder / Admin",
+          title: adminTitleFor(
+            meRes.data.person.name,
+            isSuper,
+            matchedLocal?.title || "Founder / Admin"
+          ),
         },
       };
     }
@@ -2199,9 +2217,11 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
           name: matchedLocal.name,
           email: matchedLocal.email || "",
           role: isSuper ? "super_admin" : "admin",
-          title: isSuper
-            ? "Secretary · Super Admin"
-            : matchedLocal.title || "Admin",
+          title: adminTitleFor(
+            matchedLocal.name,
+            isSuper,
+            matchedLocal.title || "Admin"
+          ),
         },
       };
     }
@@ -2617,9 +2637,11 @@ select label, key, is_super, created_at from public.mochi_admin_keys where revok
             name: rk.label || rk.name || existing?.name || "Admin",
             email: rk.email || existing?.email || "",
             role: isSuper ? "super_admin" : "admin",
-            title: isSuper
-              ? "Secretary · Super Admin"
-              : existing?.title || "Admin",
+            title: adminTitleFor(
+              rk.label || rk.name || existing?.name,
+              isSuper,
+              existing?.title || "Admin"
+            ),
             key: clean,
             created_at: rk.created_at || existing?.created_at || null,
           });
