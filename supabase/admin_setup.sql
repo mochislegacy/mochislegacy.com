@@ -11,7 +11,7 @@
 -- This file contains NO keys. It is safe for it to live in the public repo.
 --
 -- How to run:
---   1. Open https://supabase.com/dashboard/project/yhkzgnjiejbdzvgbldxy/sql/new
+--   1. Open https://supabase.com/dashboard/project/reaejdpsapuvuquxfvip/sql/new
 --   2. Paste this whole file, click "Run".
 --   3. Copy the key shown in the results grid. Open
 --        https://mochislegacy.org/#k=<that key>
@@ -387,14 +387,10 @@ grant execute on function public.mochi_k_create_key(text, text, text)           
 grant execute on function public.mochi_k_list_keys(text)                             to anon, authenticated;
 grant execute on function public.mochi_k_revoke_key(text, uuid, text)               to anon, authenticated;
 
--- 7. Seed initial admin keys (only if they do not exist yet) ---------------------
-insert into public.mochi_admin_keys (label, email, key, is_super)
-values
-  ('Nolan Bonnie',     null, 'a1f09b4e7c2d8365e04192b8c7d653f1', true),
-  ('Ed Bardzik',       null, 'b2e18c5f6d3a9476f15203c9d8e764a2', false),
-  ('Sarah Montgomery', null, 'c3d27a6e5b4f0587a26314dae9f875b3', false),
-  ('Dylan Agema',      null, 'd4c36b7d4a5e1698b37425ebf0a986c4', false)
-on conflict (key) do nothing;
+-- 7. First Super Admin key (created once, with a random value) -------------------
+insert into public.mochi_admin_keys (label, key, is_super)
+select 'Nolan Bonnie', replace(gen_random_uuid()::text, '-', ''), true
+where not exists (select 1 from public.mochi_admin_keys where is_super);
 
--- Active keys listing (Copy Nolan's Super Admin key: a1f09b4e7c2d8365e04192b8c7d653f1)
+-- Active keys listing (copy the Super Admin key from the results grid)
 select label, key, is_super, created_at from public.mochi_admin_keys where revoked_at is null order by is_super desc, created_at asc;
